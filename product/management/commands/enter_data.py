@@ -1,9 +1,12 @@
+import os
+
 import requests
 import json
 import io
 
+from django.core.files import File
 from django.core.management import BaseCommand, call_command
-from ...models import Item, Especs, Sku, Type, Brand, Collection
+from ...models import Item, Specs, Sku, Type, Brand, Collection, Photo
 
 
 def join_duplicate_keys(ordered_pairs):
@@ -46,8 +49,8 @@ def add_color(id, colors):
             return colors[i]['dsCor']
 
 
-def add_especs(especs, package_especs, model_object):
-    # especs is data[i]['SKU'][j]['classificacaoSKU']
+def add_specs(specs, package_specs, model_object):
+    # specs is data[i]['SKU'][j]['classificacaoSKU']
     # package_especs is package['dados']['campoAdicional']
     # model_object is product.sku[j]
 
@@ -61,33 +64,34 @@ def add_especs(especs, package_especs, model_object):
             if id == specs_description[i]['cdClassificacao']:
                 return specs_description[i]['dsClassificacao']
 
-    if isinstance(especs, dict):  # Test if sku_class is dict, if true append to list
-        aux = especs
-        especs = [aux]
+    if isinstance(specs, dict):  # Test if sku_class is dict, if true append to list
+        aux = specs
+        specs = [aux]
 
-    if isinstance(package_especs, dict):  # Test if package_type is dict, if true append to list
-        aux = package_especs
-        package_especs = [aux]
+    if isinstance(package_specs, dict):  # Test if package_type is dict, if true append to list
+        aux = package_specs
+        package_specs = [aux]
 
-    for i in range(len(especs)):
-        for j in range(len(package_especs)):
-            if package_especs[j]['cdTipoclas'] != 6 and package_especs[j]['cdTipoclas'] != 112 and \
-                    package_especs[j]['cdTipoclas'] != 7:
-                if especs[i]['cdTipoClasSKU'] == package_especs[j]['cdTipoclas']:
-                    model_object.especs.append(
-                        Especs(id=especs[i]['cdTipoClasSKU'],
-                               id_description=especs[i][
-                                   'cdClassificacaoSKU'],
-                               name=package_especs[j]['dsTipoclas'],
-                               description=add_description(especs[i]['cdClassificacaoSKU'],
-                                                           package_especs[j]['classificacao'])))
+    for i in range(len(specs)):
+        for j in range(len(package_specs)):
+            if package_specs[j]['cdTipoclas'] != 6 and package_specs[j]['cdTipoclas'] != 112 and \
+                    package_specs[j]['cdTipoclas'] != 7:
+                if specs[i]['cdTipoClasSKU'] == package_specs[j]['cdTipoclas']:
+                    print("estoy aqui")
+                    model_object.specs.append(
+                        Specs(id=specs[i]['cdTipoClasSKU'],
+                              id_description=specs[i][
+                                  'cdClassificacaoSKU'],
+                              name=package_specs[j]['dsTipoclas'],
+                              description=add_description(specs[i]['cdClassificacaoSKU'],
+                                                          package_specs[j]['classificacao'])))
 
             # Add brand
-            if package_especs[j]['cdTipoclas'] == 7:
-                if especs[i]['cdTipoClasSKU'] == package_especs[j]['cdTipoclas']:
-                    model_object.collection.id = especs[i]['cdClassificacaoSKU']
-                    model_object.collection.season = add_description(especs[i]['cdClassificacaoSKU'],
-                                                              package_especs[j]['classificacao'])
+            if package_specs[j]['cdTipoclas'] == 7:
+                if specs[i]['cdTipoClasSKU'] == package_specs[j]['cdTipoclas']:
+                    model_object.collection.id = specs[i]['cdClassificacaoSKU']
+                    model_object.collection.season = add_description(specs[i]['cdClassificacaoSKU'],
+                                                                     package_specs[j]['classificacao'])
 
 
 def add_addicional_field(addicional_field, package_addicional_field, model_object):
@@ -123,6 +127,8 @@ class Command(BaseCommand):
         #                       object_pairs_hook=join_duplicate_keys)
 
         packages = eval(packages.getvalue())  # convert StringIO to dict
+        dirs = os.listdir('media/FOTOS')
+        dirs = os.listdir('media/FOTOS')
         errors = []
 
         if 'pacotes' not in packages:
@@ -154,6 +160,14 @@ class Command(BaseCommand):
                             p = Item.objects.filter(id=data[i]['cdRef'])
                             p.delete()
 
+                        if not Photo.objects.filter(id=data[i]['cdRef'].split()[2]).exists():
+                            photo = Photo(id=data[i]['cdRef'].split()[2])
+                            for file in dirs:
+                                if photo.id in file:
+                                    # print(photo.id)
+                                    photo.front_photo.save(file, File(open('media/FOTOS/{}'.format(file), 'rb')))
+                            photo.save()
+
                         # create a instance of model classes
                         product = Item()
                         product.brand = Brand()
@@ -162,7 +176,7 @@ class Command(BaseCommand):
 
                         # create a list of SKU and Classificacao model classes
                         product.sku = []
-                        product.especs = []
+                        product.specs = []
 
                         product.id = data[i]['cdRef']
                         product.brand.id = data[i]['nivel'][1]['cdGrupoNivel']
@@ -194,10 +208,9 @@ class Command(BaseCommand):
                                 product.price = data[i]['SKU'][j]['valorSKU']['vlValorSKU']
 
                             # Test if values are None to avoid duplicated values in Classificacao model
-                            if not product.collection.season and not product.especs:
-                                print("ok")
-                                add_especs(data[i]['SKU'][j]['classificacaoSKU'],
-                                           package['dados']['tipoClassificacao'], product)
+                            if not product.collection.season and not product.specs:
+                                add_specs(data[i]['SKU'][j]['classificacaoSKU'],
+                                          package['dados']['tipoClassificacao'], product)
 
                             # Create a list of Campo Adicional model class
                             product.sku[j].additional_field = []

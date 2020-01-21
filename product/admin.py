@@ -85,7 +85,6 @@ class AdditionalPhotoListFilter(admin.SimpleListFilter):
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
     list_display = ('id', 'front_photo', 'back_photo', 'detail_photo', 'lookbook_photo')
-    ordering = ('id',)
     search_fields = ['id']
     list_filter = (FrontPhotoListFilter, BackPhotoListFilter, DetailPhotoListFilter, LookbookPhotoListFilter,
                    AdditionalPhotoListFilter)

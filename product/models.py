@@ -33,7 +33,7 @@ class Type(models.Model):
 class Sku(models.Model):
     class Color(models.Model):
         id = models.CharField(max_length=64)
-        color = models.CharField(max_length=64, verbose_name="nome")
+        name = models.CharField(max_length=64, verbose_name="nome")
 
         class Meta:
             abstract = True
@@ -47,7 +47,7 @@ class Sku(models.Model):
             abstract = True
             verbose_name_plural = "Campos Adicionais"
 
-    id = models.IntegerField()
+    id = models.CharField(max_length=255)
     sku = models.IntegerField()
     price = models.CharField(max_length=8, verbose_name="preço")
     weight = models.CharField(max_length=8, verbose_name="Peso")
@@ -60,7 +60,7 @@ class Sku(models.Model):
         abstract = True
 
 
-class Especs(models.Model):
+class Specs(models.Model):
     id = models.IntegerField()
     id_description = models.IntegerField(verbose_name="id descrição")
     name = models.CharField(max_length=64, verbose_name="nome")
@@ -82,7 +82,7 @@ class Item(models.Model):
     type = models.EmbeddedField(model_container=Type, verbose_name="Tipo")
 
     sku = models.ArrayField(model_container=Sku)
-    especs = models.ArrayField(model_container=Especs, verbose_name="Classificação")
+    specs = models.ArrayField(model_container=Specs, verbose_name="Classificação")
 
     class Meta:
         verbose_name_plural = "Itens"
@@ -157,7 +157,7 @@ class Photo(models.Model):
     objects = models.DjongoManager()
     _id = models.ObjectIdField()  # This is used to avoid calling makemigrations/migrate every changes
 
-    id = models.CharField( max_length=64, verbose_name="referência")
+    id = models.CharField(max_length=64, verbose_name="referência")
     front_photo = models.FileField(upload_to=FrontPhoto('photo/'), storage=OverwriteStorage(), verbose_name="frente",
                                    blank=True, null=True)
     back_photo = models.FileField(upload_to=BackPhoto('photo/'), storage=OverwriteStorage(), verbose_name="costas",
