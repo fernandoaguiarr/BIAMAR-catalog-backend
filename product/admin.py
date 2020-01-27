@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.db.models import Q
 
-from .models import Item, Photo
+from .models import Item, Photo, Type
+
 
 # Register your models here.
-admin.site.register([Item])
+# admin.site.register([Item])
 
 
 class FrontPhotoListFilter(admin.SimpleListFilter):
@@ -22,21 +23,6 @@ class FrontPhotoListFilter(admin.SimpleListFilter):
             return queryset.filter(Q(front_photo__isnull=True) | Q(front_photo__exact=''))
 
 
-class BackPhotoListFilter(admin.SimpleListFilter):
-    title = 'Foto costas'
-    parameter_name = 'has_backPhoto'
-
-    def lookups(self, request, model_admin):
-        return (
-            ('sim', 'Sim'), ('não', 'Não'),)
-
-    def queryset(self, request, queryset):
-        if self.value() == 'sim':
-            return queryset.filter(back_photo__isnull=False).exclude(back_photo='')
-        if self.value() == 'não':
-            return queryset.filter(Q(back_photo__isnull=True) | Q(back_photo__exact=''))
-
-
 class DetailPhotoListFilter(admin.SimpleListFilter):
     title = 'Foto detalhes'
     parameter_name = 'has_detailPhoto'
@@ -50,6 +36,21 @@ class DetailPhotoListFilter(admin.SimpleListFilter):
             return queryset.filter(detail_photo__isnull=False).exclude(detail_photo='')
         if self.value() == 'não':
             return queryset.filter(Q(detail_photo__isnull=True) | Q(detail_photo__exact=''))
+
+
+class ConceptPhotoListFilter(admin.SimpleListFilter):
+    title = 'Foto conceito'
+    parameter_name = 'has_conceptPhoto'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('sim', 'Sim'), ('não', 'Não'),)
+
+    def queryset(self, request, queryset):
+        if self.value() == 'sim':
+            return queryset.filter(concept_photo__isnull=False).exclude(concept_photo='')
+        if self.value() == 'não':
+            return queryset.filter(Q(concept_photo__isnull=True) | Q(concept_photo__exact=''))
 
 
 class LookbookPhotoListFilter(admin.SimpleListFilter):
@@ -84,7 +85,13 @@ class AdditionalPhotoListFilter(admin.SimpleListFilter):
 
 @admin.register(Photo)
 class PhotoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'front_photo', 'back_photo', 'detail_photo', 'lookbook_photo')
+    list_display = ('id', 'front_photo', 'concept_photo', 'detail_photo', 'lookbook_photo')
     search_fields = ['id']
-    list_filter = (FrontPhotoListFilter, BackPhotoListFilter, DetailPhotoListFilter, LookbookPhotoListFilter,
+    list_filter = (FrontPhotoListFilter, ConceptPhotoListFilter, DetailPhotoListFilter, LookbookPhotoListFilter,
                    AdditionalPhotoListFilter)
+
+
+@admin.register(Item)
+class ItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'price')
+    search_fields = ['id']

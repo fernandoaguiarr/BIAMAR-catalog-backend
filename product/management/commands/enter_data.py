@@ -77,7 +77,6 @@ def add_specs(specs, package_specs, model_object):
             if package_specs[j]['cdTipoclas'] != 6 and package_specs[j]['cdTipoclas'] != 112 and \
                     package_specs[j]['cdTipoclas'] != 7:
                 if specs[i]['cdTipoClasSKU'] == package_specs[j]['cdTipoclas']:
-                    print("estoy aqui")
                     model_object.specs.append(
                         Specs(id=specs[i]['cdTipoClasSKU'],
                               id_description=specs[i][

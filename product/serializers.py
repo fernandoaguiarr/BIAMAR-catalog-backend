@@ -2,11 +2,11 @@ from abc import ABC
 
 from djongo.models import ObjectIdField
 from rest_framework import serializers
-from .models import Photo, Item, Specs
+from .models import Photo, Item, Specs, Collection
 
 
 class GenericSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.CharField()
     name = serializers.CharField()
 
 
@@ -54,4 +54,4 @@ class ItemSerializer(serializers.ModelSerializer):
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
-        fields = '__all__'
+        fields = ('id', 'front_photo',  'detail_photo', 'concept_photo', 'lookbook_photo', 'additional_photo')

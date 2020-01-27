@@ -13,6 +13,9 @@ class Brand(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return str(self.id)
+
 
 class Collection(models.Model):
     id = models.IntegerField()
@@ -21,6 +24,9 @@ class Collection(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return str(self.id)
+
 
 class Type(models.Model):
     id = models.IntegerField()
@@ -28,6 +34,9 @@ class Type(models.Model):
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Sku(models.Model):
@@ -38,6 +47,9 @@ class Sku(models.Model):
         class Meta:
             abstract = True
 
+        def __str__(self):
+            return str(self.id)
+
     class AdditionalField(models.Model):
         id = models.IntegerField()
         title = models.CharField(max_length=64, verbose_name="nome")
@@ -46,6 +58,9 @@ class Sku(models.Model):
         class Meta:
             abstract = True
             verbose_name_plural = "Campos Adicionais"
+
+        def __str__(self):
+            return str(self.id)
 
     id = models.CharField(max_length=255)
     sku = models.IntegerField()
@@ -59,6 +74,9 @@ class Sku(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return str(self.id)
+
 
 class Specs(models.Model):
     id = models.IntegerField()
@@ -68,6 +86,9 @@ class Specs(models.Model):
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Item(models.Model):
@@ -110,14 +131,14 @@ class FrontPhoto(object):
 
 
 @deconstructible
-class BackPhoto(object):
+class ConceptPhoto(object):
 
     def __init__(self, path):
         self.sub_path = path
 
     def __call__(self, instance, filename):
         ext = filename.split('.')[-1]
-        return os.path.join(self.sub_path, '{}_costas.{}'.format(instance.id, ext))
+        return os.path.join(self.sub_path, '{}_conceito.{}'.format(instance.id, ext))
 
 
 @deconstructible
@@ -160,10 +181,13 @@ class Photo(models.Model):
     id = models.CharField(max_length=64, verbose_name="referência")
     front_photo = models.FileField(upload_to=FrontPhoto('photo/'), storage=OverwriteStorage(), verbose_name="frente",
                                    blank=True, null=True)
-    back_photo = models.FileField(upload_to=BackPhoto('photo/'), storage=OverwriteStorage(), verbose_name="costas",
-                                  blank=True, null=True)
     detail_photo = models.FileField(upload_to=DetailPhoto('photo/'), storage=OverwriteStorage(), verbose_name="detalhe",
                                     blank=True, null=True)
+
+    concept_photo = models.FileField(upload_to=ConceptPhoto('photo/'), storage=OverwriteStorage(),
+                                     verbose_name="Conceito",
+                                     blank=True, null=True)
+
     lookbook_photo = models.FileField(upload_to=LookbookPhoto('photo/'), storage=OverwriteStorage(),
                                       verbose_name="lookbook", blank=True, null=True)
     additional_photo = models.FileField(upload_to=AdditionalPhoto('photo/'), storage=OverwriteStorage(),
