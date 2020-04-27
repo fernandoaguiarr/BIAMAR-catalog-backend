@@ -79,10 +79,13 @@ DATABASES = {
         'PASSWORD': 'biamar',
         'HOST': '192.168.0.59',  # Or an IP Address that your DB is hosted on
         'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     },
     'item': {
         'ENGINE': 'djongo',
-        'NAME': 'test',
+        'NAME': 'item',
         'HOST': '192.168.0.59',  # Or an IP Address that your DB is hosted on
         'PORT': 27017,
     }
