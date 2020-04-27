@@ -73,6 +73,7 @@ def add_specs(specs, package_specs, model_object):
 
     for i in range(len(specs)):
         for j in range(len(package_specs)):
+
             if package_specs[j]['cdTipoclas'] != 6 and package_specs[j]['cdTipoclas'] != 112 and \
                     package_specs[j]['cdTipoclas'] != 7 and package_specs[j]['cdTipoclas'] != 1:
 
@@ -199,9 +200,6 @@ class Command(BaseCommand):
 
                             product.sku.append(Sku(id=data[i]['SKU'][j]['cdProdutoSKU'],
                                                    sku=data[i]['SKU'][j]['nrProdutoSKU'],
-                                                   # id_cor=(data[i]['SKU'][j]['cdCorSKU']),
-                                                   # cor=insert_color(data[i]['SKU'][j]['cdCorSKU'],
-                                                   #                  package['dados']['cor']),
                                                    weight=data[i]['SKU'][j]['qtPesoSKU'],
                                                    size=data[i]['SKU'][j]['dsTamanhoSKU']))
 

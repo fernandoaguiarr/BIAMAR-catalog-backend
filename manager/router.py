@@ -5,6 +5,7 @@ class MasterRouter(object):
         'contenttypes',
         'sessions',
         'messages',
+        'authtoken'
     )
 
     def db_for_read(self, model, **hints):
