@@ -34,6 +34,14 @@ class Type(models.Model):
         return str(self.id)
 
 
+class Genre(models.Model):
+    id = models.IntegerField()
+    name = models.CharField(max_length=32, verbose_name="Nome")
+
+    class Meta:
+        abstract = True
+
+
 class Sku(models.Model):
     class Color(models.Model):
         id = models.CharField(max_length=64)
@@ -94,6 +102,7 @@ class Item(models.Model):
     brand = models.EmbeddedModelField(model_container=Brand, verbose_name="Marca")
     collection = models.EmbeddedModelField(model_container=Collection, verbose_name="Coleção")
     type = models.EmbeddedModelField(model_container=Type, verbose_name="Tipo")
+    genre = models.EmbeddedModelField(model_container=Genre, verbose_name="Genero")
 
     sku = models.ArrayModelField(model_container=Sku)
     specs = models.ArrayModelField(model_container=Specs, verbose_name="Classificação")
