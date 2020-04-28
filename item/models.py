@@ -1,6 +1,8 @@
 from djongo import models
 
 
+# ABSTRACT MODELS
+# ITEM ABSTRACT MODELS
 class Brand(models.Model):
     id = models.IntegerField()
     name = models.CharField(verbose_name="Nome", max_length=32)
@@ -94,6 +96,12 @@ class Specs(models.Model):
         return str(self.id)
 
 
+#PHOTO ABSTRACT MODELS
+
+# class Url(models.Model):
+#     path =
+
+# NON ABSTRACT MODELS
 class Item(models.Model):
     _id = models.ObjectIdField()  # This is used to avoid calling makemigrations/migrate every changes
     id = models.CharField(max_length=64, verbose_name="Referência")
@@ -114,3 +122,12 @@ class Item(models.Model):
 
     def __str__(self):
         return self.id
+
+
+class Photo(models.Model):
+    _id = models.ObjectIdField()  # This is used to avoid calling makemigrations/migrate every changes
+    id = models.CharField(max_length=32)
+    photos = models.ListField()
+
+    objects = models.DjongoManager()
+
