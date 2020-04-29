@@ -96,7 +96,7 @@ class Specs(models.Model):
         return str(self.id)
 
 
-#PHOTO ABSTRACT MODELS
+# PHOTO ABSTRACT MODELS
 
 # class Url(models.Model):
 #     path =
@@ -127,7 +127,9 @@ class Item(models.Model):
 class Photo(models.Model):
     _id = models.ObjectIdField()  # This is used to avoid calling makemigrations/migrate every changes
     id = models.CharField(max_length=32)
-    photos = models.ListField()
+    photos = models.ListField(null=True, blank=True)
 
     objects = models.DjongoManager()
 
+    def __str__(self):
+        return self.id

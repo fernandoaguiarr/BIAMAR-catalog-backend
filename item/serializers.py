@@ -51,7 +51,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class PhotoSerializer(serializers.ModelSerializer):
-    photos = serializers.ListField(child=serializers.CharField(max_length=128))
+    photos = serializers.ListField(child=serializers.CharField(max_length=128), allow_empty=True)
 
     class Meta:
         model = Photo

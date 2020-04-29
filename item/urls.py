@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 
-from .views import ItemViewSet, PhotoViewSet
+from .views import PhotoViewSet, ItemViewSet
 
 router = DefaultRouter()
 router.register(r'item', ItemViewSet, basename='item')
