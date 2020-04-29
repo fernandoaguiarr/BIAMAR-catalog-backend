@@ -4,7 +4,7 @@ import json
 import requests
 from django.core.management import BaseCommand, call_command
 
-from ...models import Item, Specs, Sku, Type, Brand, Collection, Genre
+from ...models import Item, Specs, Sku, Type, Brand, Collection, Genre, Photo
 
 
 def join_duplicate_keys(ordered_pairs):
@@ -24,7 +24,7 @@ def join_duplicate_keys(ordered_pairs):
 def get_package(id_package, token):
     header = {
         # 'Authorization': 'Bearer {}'.format(token),
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnZpcm9ubWVudCI6ImJpYW1hciIsInNpZCI6IkJxbHZpVHhzeGNGK3haZWd5em9IaW1oSzJyWEd4VUE4Rm84OFlSWkhwaVk9IiwianRpIjoiZGJjODBmZGEtOGE3ZS00NTkzLTlmYWUtMTc1NTYxMTExYWRmIiwiZXhwIjoxNTg4MDc5MjkyLCJpc3MiOiJodHRwOi8vdmlydHVhbGFnZS5jb20uYnIifQ.Le0jdt4TAT8fJcMhKbm8BKgVQXmY-gSTDhce5THpT_Q',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnZpcm9ubWVudCI6ImJpYW1hciIsInNpZCI6IkJxbHZpVHhzeGNGK3haZWd5em9IaW1oSzJyWEd4VUE4Rm84OFlSWkhwaVk9IiwianRpIjoiOTRlMDM2ODAtOTk4Zi00MGJmLWI3NTMtMTE4ZDVlYjUxYzQwIiwiZXhwIjoxNTg4MjUxNTA3LCJpc3MiOiJodHRwOi8vdmlydHVhbGFnZS5jb20uYnIifQ.fSfKAIj57Urs3qcGzxThTAj_fpwxnG6LUaOUjyoUJmo',
         'Content-Type': 'application/json'
     }
     body = {
@@ -167,12 +167,13 @@ class Command(BaseCommand):
                             p = Item.objects.filter(id=data[i]['cdRef'])
                             p.delete()
 
-                        # if not Photo.objects.filter(id=data[i]['cdRef'].split()[2]).exists():
-                        #     photo = Photo(id=data[i]['cdRef'].split()[2])
+                        if not Photo.objects.filter(id=data[i]['cdRef'].split()[2]).exists():
+                            photo = Photo(id=data[i]['cdRef'].split()[2], photos=[])
+
                         #     for file in dirs:
                         #         if photo.id in file:
                         #             photo.front_photo.save(file, File(open('media/FOTOS/{}'.format(file), 'rb')))
-                        #     photo.save()
+                            photo.save()
 
                         # create a instance of model classes
                         product = Item()
