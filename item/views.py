@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Item, Photo
-from .serializers import PhotoSerializer, ItemSerializer
+from .serializers import PhotoSerializer, ItemSerializer, GenericItemSerializer
 
 
 # Override default DjangoModelPermissions on PhotoViewSet
@@ -160,12 +160,24 @@ class ItemViewSet(viewsets.ViewSet):
         return Item.objects.all()
 
     # Get all items that contains pk
+    # This query_params is used to controll fields that will be returned
+    # query_params['all'] == true -> local use
+    # query_params['all'] == false or not exist -> remote use
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
-        queryset = queryset.filter(id__contains=pk)
+
+        query_params = request.query_params.get('all')
+        queryset = queryset.filter(id__contains=pk) if query_params else queryset.filter(
+            id__contains=pk).values('id',
+                                    'brand',
+                                    'collection',
+                                    'type',
+                                    'genre')
 
         if not queryset:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ItemSerializer(queryset, many=True)
+        # Use GenericItemSerializer to not display price, sku and specs fields. only remote use
+        # Use ItemSerializer to display all fields. only local use
+        serializer = ItemSerializer(queryset, many=True) if query_params else GenericItemSerializer(queryset, many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)

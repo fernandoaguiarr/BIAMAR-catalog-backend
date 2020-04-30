@@ -50,6 +50,17 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ('id', 'price', 'brand', 'genre', 'collection', 'type', 'sku', 'specs')
 
 
+class GenericItemSerializer(serializers.ModelSerializer):
+    brand = GenericSerializer()
+    collection = CollectionSerializer()
+    type = GenericSerializer()
+    genre = GenericSerializer()
+
+    class Meta:
+        model = Item
+        fields = ('id', 'brand', 'collection', 'type', 'genre')
+
+
 class PhotoSerializer(serializers.ModelSerializer):
     photos = serializers.ListField(child=serializers.CharField(max_length=128), allow_empty=True)
 

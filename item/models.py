@@ -43,6 +43,8 @@ class Genre(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return str(self.id)
 
 class Sku(models.Model):
     class Color(models.Model):
