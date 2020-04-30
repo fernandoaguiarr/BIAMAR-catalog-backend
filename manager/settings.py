@@ -110,8 +110,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.DjangoModelPermissions'
     )
-    # 'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
-
 }
 
 # Password validation
@@ -149,3 +147,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Media configs
+MEDIA_URL = '/media/'
+MEDIA_ROOT = 'C:/Users/faguiar/Desktop/django-rest/media'
