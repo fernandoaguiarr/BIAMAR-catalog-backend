@@ -3,6 +3,7 @@ import copy
 
 import magic
 from django.core.files.storage import FileSystemStorage
+from django.db.models import Q
 from rest_framework import viewsets, permissions, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
@@ -52,6 +53,12 @@ class PhotoViewSet(viewsets.ViewSet):
             if 'id' in query_filter:
                 del query_filter['id']
 
+            # Remove 'all' from query_filter, because this query_params only set images that will be displayed
+            # This query_param is used to display only items that contais 'lookbook', 'conceito', 'ecommerce' an
+            # 'adicional' photos
+            if 'all':
+                del query_filter['all']
+
             # Use query_filter to filter queryset and select only 'id' field
             # create a list named items to save the ID without type and brand
             # Item query id pattern: 00 00 000000, item list pattern: 000000
@@ -74,6 +81,11 @@ class PhotoViewSet(viewsets.ViewSet):
 
             # Set queryset to use Photo model and filter with all id's in items list
             queryset = self.get_queryset().filter(id__in=items).order_by('-id')
+
+            # If true, query will filter all photos that contains 'conceito', 'ecommerce' and 'lookbook'
+            if query_params['all'] == '1':
+                queryset = queryset.filter(
+                    Q(photos__contains='lookbook') | Q(photos__contains='conceito') | Q(photos__contains='ecommerce'))
 
             # if queryset result is none, return Error 404
             if not queryset:
@@ -110,8 +122,9 @@ class PhotoViewSet(viewsets.ViewSet):
 
         if files:
             for item in files:
+
                 url = '{}{}'.format(storage.base_url, item.name)
-                if check_in_memory_mime(item) == 'image/png' and item.size <= 2097152:
+                if check_in_memory_mime(item) == 'image/jpeg':
                     if storage.exists(item.name):
                         storage.delete(item.name)
                         upload_file(item)
