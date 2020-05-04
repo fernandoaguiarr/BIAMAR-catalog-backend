@@ -31,16 +31,11 @@ class SkuSerializer(serializers.Serializer):
     additional_field = serializers.ListField(child=AdditionalFieldSerializer())
 
 
-class CollectionSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    season = serializers.CharField()
-
-
 class ItemSerializer(serializers.ModelSerializer):
     brand = GenericSerializer()
     type = GenericSerializer()
     genre = GenericSerializer()
-    collection = CollectionSerializer()
+    collection = GenericSerializer()
 
     sku = serializers.ListField(child=SkuSerializer())
     specs = serializers.ListField(child=SpecsSerializer())
@@ -52,7 +47,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
 class GenericItemSerializer(serializers.ModelSerializer):
     brand = GenericSerializer()
-    collection = CollectionSerializer()
+    collection = GenericSerializer()
     type = GenericSerializer()
     genre = GenericSerializer()
 
@@ -67,3 +62,9 @@ class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
         fields = ('id', 'photos')
+
+
+class FilterSerializer(serializers.Serializer):
+    collection = GenericSerializer(many=True)
+    type = GenericSerializer(many=True)
+    brand = GenericSerializer(many=True)

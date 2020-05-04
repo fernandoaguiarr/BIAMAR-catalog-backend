@@ -3,9 +3,10 @@ from djongo import models
 
 # ABSTRACT MODELS
 # ITEM ABSTRACT MODELS
-class Brand(models.Model):
+
+class Generic(models.Model):
     id = models.IntegerField()
-    name = models.CharField(verbose_name="Nome", max_length=32)
+    name = models.CharField(max_length=255, verbose_name="Período")
 
     class Meta:
         abstract = True
@@ -13,38 +14,6 @@ class Brand(models.Model):
     def __str__(self):
         return str(self.id)
 
-
-class Collection(models.Model):
-    id = models.IntegerField()
-    season = models.CharField(max_length=255, verbose_name="Período")
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        return str(self.id)
-
-
-class Type(models.Model):
-    id = models.IntegerField()
-    name = models.CharField(max_length=255, verbose_name="Nome")
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        return str(self.id)
-
-
-class Genre(models.Model):
-    id = models.IntegerField()
-    name = models.CharField(max_length=32, verbose_name="Nome")
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        return str(self.id)
 
 class Sku(models.Model):
     class Color(models.Model):
@@ -98,21 +67,16 @@ class Specs(models.Model):
         return str(self.id)
 
 
-# PHOTO ABSTRACT MODELS
-
-# class Url(models.Model):
-#     path =
-
 # NON ABSTRACT MODELS
 class Item(models.Model):
     _id = models.ObjectIdField()  # This is used to avoid calling makemigrations/migrate every changes
     id = models.CharField(max_length=64, verbose_name="Referência")
     price = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Preço")
 
-    brand = models.EmbeddedModelField(model_container=Brand, verbose_name="Marca")
-    collection = models.EmbeddedModelField(model_container=Collection, verbose_name="Coleção")
-    type = models.EmbeddedModelField(model_container=Type, verbose_name="Tipo")
-    genre = models.EmbeddedModelField(model_container=Genre, verbose_name="Genero")
+    brand = models.EmbeddedModelField(model_container=Generic, verbose_name="Marca")
+    collection = models.EmbeddedModelField(model_container=Generic, verbose_name="Coleção")
+    type = models.EmbeddedModelField(model_container=Generic, verbose_name="Tipo")
+    genre = models.EmbeddedModelField(model_container=Generic, verbose_name="Genero")
 
     sku = models.ArrayModelField(model_container=Sku)
     specs = models.ArrayModelField(model_container=Specs, verbose_name="Classificação")

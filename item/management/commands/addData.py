@@ -4,7 +4,7 @@ import json
 import requests
 from django.core.management import BaseCommand, call_command
 
-from ...models import Item, Specs, Sku, Type, Brand, Collection, Genre, Photo
+from ...models import Item, Specs, Sku, Generic, Photo
 
 
 def join_duplicate_keys(ordered_pairs):
@@ -24,7 +24,7 @@ def join_duplicate_keys(ordered_pairs):
 def get_package(id_package, token):
     header = {
         # 'Authorization': 'Bearer {}'.format(token),
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnZpcm9ubWVudCI6ImJpYW1hciIsInNpZCI6IkJxbHZpVHhzeGNGK3haZWd5em9IaW1oSzJyWEd4VUE4Rm84OFlSWkhwaVk9IiwianRpIjoiOTRlMDM2ODAtOTk4Zi00MGJmLWI3NTMtMTE4ZDVlYjUxYzQwIiwiZXhwIjoxNTg4MjUxNTA3LCJpc3MiOiJodHRwOi8vdmlydHVhbGFnZS5jb20uYnIifQ.fSfKAIj57Urs3qcGzxThTAj_fpwxnG6LUaOUjyoUJmo',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbnZpcm9ubWVudCI6ImJpYW1hciIsInNpZCI6IkJxbHZpVHhzeGNGK3haZWd5em9IaW1oSzJyWEd4VUE4Rm84OFlSWkhwaVk9IiwianRpIjoiNjY2YTE1ODItMTI1OS00YzU5LWFkMjItMmJhYzExNDBkNmZiIiwiZXhwIjoxNTg4Njc1MDQ0LCJpc3MiOiJodHRwOi8vdmlydHVhbGFnZS5jb20uYnIifQ.3OY-PXcYA1uRlWqeWFTGt7l_CSoT_NhIsnOyiy-gHZQ',
         'Content-Type': 'application/json'
     }
     body = {
@@ -97,7 +97,7 @@ def add_specs(specs, package_specs, model_object):
             elif package_specs[j]['cdTipoclas'] == 7:
                 if specs[i]['cdTipoClasSKU'] == package_specs[j]['cdTipoclas']:
                     model_object.collection.id = specs[i]['cdClassificacaoSKU']
-                    model_object.collection.season = add_description(specs[i]['cdClassificacaoSKU'],
+                    model_object.collection.name = add_description(specs[i]['cdClassificacaoSKU'],
                                                                      package_specs[j]['classificacao'])
 
 
@@ -170,17 +170,17 @@ class Command(BaseCommand):
                         if not Photo.objects.filter(id=data[i]['cdRef'].split()[2]).exists():
                             photo = Photo(id=data[i]['cdRef'].split()[2], photos=[])
 
-                        #     for file in dirs:
-                        #         if photo.id in file:
-                        #             photo.front_photo.save(file, File(open('media/FOTOS/{}'.format(file), 'rb')))
+                            #     for file in dirs:
+                            #         if photo.id in file:
+                            #             photo.front_photo.save(file, File(open('media/FOTOS/{}'.format(file), 'rb')))
                             photo.save()
 
                         # create a instance of model classes
                         product = Item()
-                        product.brand = Brand()
-                        product.genre = Genre()
-                        product.type = Type()
-                        product.collection = Collection()
+                        product.brand = Generic()
+                        product.genre = Generic()
+                        product.type = Generic()
+                        product.collection = Generic()
 
                         # create a list of SKU and Classificacao model classes
                         product.sku = []
@@ -213,7 +213,7 @@ class Command(BaseCommand):
                                 product.price = data[i]['SKU'][j]['valorSKU']['vlValorSKU']
 
                             # Test if values are None to avoid duplicated values in Classificacao model
-                            if not product.collection.season and not product.specs:
+                            if not product.collection.name and not product.specs:
                                 add_specs(data[i]['SKU'][j]['classificacaoSKU'],
                                           package['dados']['tipoClassificacao'], product)
 

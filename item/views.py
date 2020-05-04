@@ -1,4 +1,5 @@
 # Create your views here.
+
 import copy
 
 import magic
@@ -10,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Item, Photo
-from .serializers import PhotoSerializer, ItemSerializer, GenericItemSerializer
+from .serializers import PhotoSerializer, ItemSerializer, GenericItemSerializer, GenericSerializer
 
 
 # Override default DjangoModelPermissions on PhotoViewSet
@@ -150,7 +151,7 @@ class PhotoViewSet(viewsets.ViewSet):
 
 
 # Override default DjangoModelPermissions permission in ItemViewSet
-# Removes POST, PATCH, DELETE options in request
+# Removes POST, PATCH, PUT and DELETE options in request
 # Because this methods wont be used
 class ItemModelPermission(permissions.DjangoModelPermissions):
     def __init__(self):
@@ -174,13 +175,13 @@ class ItemViewSet(viewsets.ViewSet):
 
     # Get all items that contains pk
     # This query_params is used to controll fields that will be returned
-    # query_params['all'] == true -> local use
-    # query_params['all'] == false or not exist -> remote use
+    # query_params['all'] == 1 -> local network use
+    # query_params['all'] == 0 or not exist -> remote network use
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
 
         query_params = request.query_params.get('all')
-        queryset = queryset.filter(id__contains=pk) if query_params else queryset.filter(
+        queryset = queryset.filter(id__contains=pk) if query_params == '0' else queryset.filter(
             id__contains=pk).values('id',
                                     'brand',
                                     'collection',
@@ -192,5 +193,33 @@ class ItemViewSet(viewsets.ViewSet):
 
         # Use GenericItemSerializer to not display price, sku and specs fields. only remote use
         # Use ItemSerializer to display all fields. only local use
-        serializer = ItemSerializer(queryset, many=True) if query_params else GenericItemSerializer(queryset, many=True)
+        serializer = ItemSerializer(queryset, many=True) if query_params == '0' else GenericItemSerializer(queryset,
+                                                                                                           many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+# Use ItemModelPermission permission class
+# Used to get all the filters (brand, collection and type)
+class FilterViewSet(viewsets.ViewSet):
+
+    # Override default method get_permissions to be able set customs permissions
+    def get_permissions(self):
+        return [IsAuthenticated(), ItemModelPermission()]
+
+    # ItemModelPermission require this method
+    def get_queryset(self):
+        return Item.objects.all()
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        brand_queryset = queryset.values_list('brand', flat=True).distinct()
+        collection_queryset = queryset.values_list('collection', flat=True).distinct()
+        type_queryset = queryset.values_list('type', flat=True).distinct()
+
+        brand_serializer = GenericSerializer(brand_queryset, many=True)
+        collection_serializer = GenericSerializer(collection_queryset, many=True)
+        type_serializer = GenericSerializer(type_queryset, many=True)
+
+        return Response(status=status.HTTP_200_OK,
+                        data={'brand': brand_serializer.data, 'collection': collection_serializer.data,
+                              'type': type_serializer.data})
