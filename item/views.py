@@ -84,7 +84,7 @@ class PhotoViewSet(viewsets.ViewSet):
             queryset = self.get_queryset().filter(id__in=items).order_by('-id')
 
             # If true, query will filter all photos that contains 'conceito', 'ecommerce' and 'lookbook'
-            if query_params['all'] == '1':
+            if query_params['all'] == '0':
                 queryset = queryset.filter(
                     Q(photos__contains='lookbook') | Q(photos__contains='conceito') | Q(photos__contains='ecommerce'))
 
@@ -181,7 +181,7 @@ class ItemViewSet(viewsets.ViewSet):
         queryset = self.get_queryset()
 
         query_params = request.query_params.get('all')
-        queryset = queryset.filter(id__contains=pk) if query_params == '0' else queryset.filter(
+        queryset = queryset.filter(id__contains=pk) if query_params == '1' else queryset.filter(
             id__contains=pk).values('id',
                                     'brand',
                                     'collection',
@@ -193,7 +193,7 @@ class ItemViewSet(viewsets.ViewSet):
 
         # Use GenericItemSerializer to not display price, sku and specs fields. only remote use
         # Use ItemSerializer to display all fields. only local use
-        serializer = ItemSerializer(queryset, many=True) if query_params == '0' else GenericItemSerializer(queryset,
+        serializer = ItemSerializer(queryset, many=True) if query_params == '1' else GenericItemSerializer(queryset,
                                                                                                            many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
@@ -211,15 +211,51 @@ class FilterViewSet(viewsets.ViewSet):
         return Item.objects.all()
 
     def list(self, request):
-        queryset = self.get_queryset()
-        brand_queryset = queryset.values_list('brand', flat=True).distinct()
-        collection_queryset = queryset.values_list('collection', flat=True).distinct()
-        type_queryset = queryset.values_list('type', flat=True).distinct()
+        # query_params['all'] == 1 -> local network use
+        # query_params['all'] == 0 or not exist -> remote network use
+        query_params = request.query_params.get('all')
 
-        brand_serializer = GenericSerializer(brand_queryset, many=True)
-        collection_serializer = GenericSerializer(collection_queryset, many=True)
-        type_serializer = GenericSerializer(type_queryset, many=True)
+        if query_params == '1':
+            queryset = self.get_queryset()
 
-        return Response(status=status.HTTP_200_OK,
-                        data={'brand': brand_serializer.data, 'collection': collection_serializer.data,
-                              'type': type_serializer.data})
+            brand_queryset = queryset.values_list('brand', flat=True).distinct()
+            collection_queryset = queryset.values_list('collection', flat=True).distinct()
+            type_queryset = queryset.values_list('type', flat=True).distinct()
+            genre_queryset = queryset.values_list('genre', flat=True).distinct()
+
+            brand_serializer = GenericSerializer(brand_queryset, many=True)
+            collection_serializer = GenericSerializer(collection_queryset, many=True)
+            type_serializer = GenericSerializer(type_queryset, many=True)
+            genre_serializer = GenericSerializer(genre_queryset, many=True)
+
+            return Response(status=status.HTTP_200_OK,
+                            data={'brand': brand_serializer.data, 'collection': collection_serializer.data,
+                                  'type': type_serializer.data, 'genre': genre_serializer.data})
+
+        else:
+            # Get only photo objects that have lookbook, conceito or ecommerce photo
+            queryset = Photo.objects.filter(
+                Q(photos__contains='lookbook') | Q(photos__contains='conceito') | Q(
+                    photos__contains='ecommerce')).values('id')
+
+            # Get code from https://stackoverflow.com/q/30427465/11515091
+            # Get the previous queryset and check if Item objects contais some item on the list (query)
+            query = Q()
+            for item in queryset:
+                query = query | Q(id__contains=item['id'])
+
+            queryset = self.get_queryset().filter(query)
+
+            brand_queryset = queryset.values_list('brand', flat=True).distinct()
+            collection_queryset = queryset.values_list('collection', flat=True).distinct()
+            type_queryset = queryset.values_list('type', flat=True).distinct()
+            genre_queryset = queryset.values_list('genre', flat=True).distinct()
+
+            brand_serializer = GenericSerializer(brand_queryset, many=True)
+            collection_serializer = GenericSerializer(collection_queryset, many=True)
+            type_serializer = GenericSerializer(type_queryset, many=True)
+            genre_serializer = GenericSerializer(genre_queryset, many=True)
+
+            return Response(status=status.HTTP_200_OK,
+                            data={'brand': brand_serializer.data, 'collection': collection_serializer.data,
+                                  'type': type_serializer.data, 'genre': genre_serializer.data})
