@@ -44,8 +44,8 @@ class Sku(models.Model):
     weight = models.CharField(max_length=8, verbose_name="Peso")
     size = models.CharField(max_length=64, verbose_name="numeração")
 
-    color = models.EmbeddedModelField(model_container=Color, verbose_name="Cor")
-    additional_field = models.ArrayModelField(model_container=AdditionalField, verbose_name="campo adicional")
+    color = models.EmbeddedField(model_container=Color, verbose_name="Cor")
+    additional_field = models.ArrayField(model_container=AdditionalField, verbose_name="campo adicional")
 
     class Meta:
         abstract = True
@@ -73,13 +73,13 @@ class Item(models.Model):
     id = models.CharField(max_length=64, verbose_name="Referência")
     price = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Preço")
 
-    brand = models.EmbeddedModelField(model_container=Generic, verbose_name="Marca")
-    collection = models.EmbeddedModelField(model_container=Generic, verbose_name="Coleção")
-    type = models.EmbeddedModelField(model_container=Generic, verbose_name="Tipo")
-    genre = models.EmbeddedModelField(model_container=Generic, verbose_name="Genero")
+    brand = models.EmbeddedField(model_container=Generic, verbose_name="Marca")
+    collection = models.EmbeddedField(model_container=Generic, verbose_name="Coleção")
+    type = models.EmbeddedField(model_container=Generic, verbose_name="Tipo")
+    genre = models.EmbeddedField(model_container=Generic, verbose_name="Genero")
 
-    sku = models.ArrayModelField(model_container=Sku)
-    specs = models.ArrayModelField(model_container=Specs, verbose_name="Classificação")
+    sku = models.ArrayField(model_container=Sku)
+    specs = models.ArrayField(model_container=Specs, verbose_name="Classificação")
 
     objects = models.DjongoManager()
 
@@ -93,7 +93,7 @@ class Item(models.Model):
 class Photo(models.Model):
     _id = models.ObjectIdField()  # This is used to avoid calling makemigrations/migrate every changes
     id = models.CharField(max_length=32)
-    photos = models.ListField(null=True, blank=True)
+    photos = models.JSONField(null=True, blank=True)
 
     objects = models.DjongoManager()
 
