@@ -24,7 +24,7 @@ SECRET_KEY = 'myt^sg+--b01)b$!xv=gt6lebx5rri7s4)q7oh^-215p1-^x_&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.111', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -78,18 +78,14 @@ WSGI_APPLICATION = 'manager.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'myproject',
-        'USER': 'django',
-        'PASSWORD': 'biamar',
-        'HOST': '192.168.0.59',  # Or an IP Address that your DB is hosted on
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'biamar_django-admin',
+        'USER': 'django-admin',
+        'PASSWORD': 'elY:O$dfJt6!RB0|T0rX',
+        'HOST': '192.168.3.7',  # Or an IP Address that your DB is hosted on
+        'PORT': '5432'
     },
     'item': {
         'ENGINE': 'djongo',
@@ -103,7 +99,6 @@ DATABASE_ROUTERS = [
 ]
 
 # Django Rest Framework Configs
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -118,7 +113,6 @@ REST_FRAMEWORK = {
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -134,9 +128,53 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Logging information
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/errors.log',
+            'formatter': 'verbose'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'propagate': True,
+        },
+        'item': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propogate': False,
+        }
+    }
+}
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
