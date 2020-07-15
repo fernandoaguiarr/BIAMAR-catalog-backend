@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Item, Photo
+from .models import Size, Color, Type, Brand, Season, Photo, Item, Sku, TypePhoto
 
 # Register your models here.
-admin.site.register([Item, Photo])
+admin.site.register([Size, Color, Type, Brand, Season, Photo, Item, Sku, TypePhoto])
