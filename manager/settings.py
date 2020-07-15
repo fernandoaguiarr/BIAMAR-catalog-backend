@@ -88,10 +88,12 @@ DATABASES = {
         'PORT': '5432'
     },
     'item': {
-        'ENGINE': 'djongo',
-        'NAME': 'item',
-        'HOST': '192.168.0.59',  # Or an IP Address that your DB is hosted on
-        'PORT': 27017,
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'biamar_produtos-teste',
+        'USER': 'django-admin',
+        'PASSWORD': 'elY:O$dfJt6!RB0|T0rX',
+        'HOST': '192.168.3.7',  # Or an IP Address that your DB is hosted on
+        'PORT': '5432'
     }
 }
 DATABASE_ROUTERS = [
@@ -173,6 +175,7 @@ LOGGING = {
         }
     }
 }
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 LANGUAGE_CODE = 'en-us'
