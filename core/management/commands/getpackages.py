@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         token = io.StringIO()
-        call_command('getToken', stdout=token)
+        call_command('gettoken', stdout=token)
 
         url = "https://www30.bhan.com.br:9443/api/v1/pacote/lista"
         header = {
