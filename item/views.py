@@ -1,261 +1,58 @@
-# Create your views here.
+import json
 
-import copy
-
-import magic
-from django.core.files.storage import FileSystemStorage
-from django.db.models import Q
-from rest_framework import viewsets, permissions, status
-from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from .models import Item, Photo
-from .serializers import PhotoSerializer, ItemSerializer, GenericItemSerializer, GenericSerializer
-
-
-# Override default DjangoModelPermissions on PhotoViewSet
-# Removes POST, PUT and DELETE options in request
-# Because this methods wont be used
-class PhotoModelPermission(permissions.DjangoModelPermissions):
-    def __init__(self):
-        self.perms_map = copy.deepcopy(self.perms_map)  # from EunChong's answer
-        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
-        self.perms_map['POST'] = []
-        self.perms_map['PUT'] = []
-        self.perms_map['DELETE'] = []
+from .models import Photo
+from .serializers import PhotoSerializer
 
 
 class PhotoViewSet(viewsets.ViewSet):
-
-    # Override default method get_permissions to be able set customs permissions
-    def get_permissions(self):
-        return [IsAuthenticated(), PhotoModelPermission()]
 
     # PhotoModelPermission require this method
     def get_queryset(self):
         return Photo.objects.all()
 
-    # This overridden method lists all Photo objects filtered
     def list(self, request):
-        # Get all Item objects, and query params
-        queryset = Item.objects.all()
+        # Query Params supported
+        list_fields = ['items__group__icontains', 'items__brand__id', 'items__season__id', 'item__type__id', 'preview']
+
+        queryset = self.get_queryset()
         query_params = request.query_params
 
-        # check if query_params isn't None
+        filters = {}
         if query_params:
-            # create a dict with query_params
-            query_filter = {el: {'id': int(query_params[el])} for el in list(query_params.keys())}
+            for item in query_params:
+                try:
+                    # Return the list_field item that have substring item
+                    key = next(filter(lambda k: item in k, list_fields))
+                    filters = {**filters, **{key: query_params[item]}}
 
-            # check if key ID exists
-            # after remove this key, because 'id':{'id': 'x'} does not work. Isn't a pattern model
-            # other keys like 'brand' looks like in dict 'brand': {'id': 'x'} is a pattern model
-            # so the key isnt deleted.
-            if 'id' in query_filter:
-                del query_filter['id']
+                    # Convert filters dict values to correct types
+                    try:
+                        if 'id' in key:
+                            filters[key] = int(filters[key])
+                        elif 'preview' == key:
+                            if filters[key].lower() == 'true':
+                                filters[key] = True
+                            elif filters[key].lower() == 'false':
+                                filters[key] = False
+                            else:
+                                raise ValueError
 
-            # Remove 'all' from query_filter, because this query_params only set images that will be displayed
-            # This query_param is used to display only items that contais 'lookbook', 'conceito', 'ecommerce' an
-            # 'adicional' photos
-            if 'all':
-                del query_filter['all']
+                    # Raise ValueError if it was not possible convert
+                    except ValueError:
+                        return Response(status.HTTP_401_UNAUTHORIZED)
 
-            # Use query_filter to filter queryset and select only 'id' field
-            # create a list named items to save the ID without type and brand
-            # Item query id pattern: 00 00 000000, item list pattern: 000000
-            queryset = queryset.filter(**query_filter).values('id')
-            items = []
-            if 'id' in query_params:
-                for item in queryset:
+                # Raise StopIteration if lambdas function return is None
+                except StopIteration:
+                    return Response(status.HTTP_401_UNAUTHORIZED)
 
-                    # Get 000000 in queryset
-                    ref = item['id'].split(" ")[2]
-                    # If query_params['id'] contains in queryset, if true append to items
-                    if (query_params['id']) and (query_params['id'] in ref):
-                        items.append(ref)
-
-            # if query_params['id'] doesnt exist append all queryset in pattern in items
-            else:
-                for item in queryset:
-                    ref = item['id'].split(" ")[2]
-                    items.append(ref)
-
-            # Set queryset to use Photo model and filter with all id's in items list
-            queryset = self.get_queryset().filter(id__in=items).order_by('-id')
-
-            # If true, query will filter all photos that contains 'conceito', 'ecommerce' and 'lookbook'
-            if query_params['all'] == '0':
-                queryset = queryset.filter(
-                    Q(photos__contains='lookbook') | Q(photos__contains='conceito') | Q(photos__contains='ecommerce'))
-
-            # if queryset result is none, return Error 404
-            if not queryset:
-                return Response(status=status.HTTP_404_NOT_FOUND)
-
-        # if query_params doesnt exist get "default" values (20 photos object)
+            # After serialization of query_params run query and group by 'items__group'
+            queryset = queryset.filter(**filters).annotate(dcount=Count('items__group'))
+            serializer = PhotoSerializer(queryset, many=True)
+            return Response(status=status.HTTP_200_OK, data=serializer.data)
         else:
-            queryset = self.get_queryset().order_by('-id')[:20]
-
-        # if queryset is not None, return queryset serialized
-        serializer = PhotoSerializer(queryset, many=True)
-        return Response(data=serializer.data)
-
-    # This overriden method get Photo object by specific ID
-    def retrieve(self, request, pk=None):
-        queryset = Photo.objects.all()
-        serializer = PhotoSerializer(get_object_or_404(queryset, id=pk))
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
-
-    # This overriden method is used to update photos url in Photo object
-    # only update url field. Check if type of file is JPG and file size is greater than 2MB
-    def partial_update(self, request, pk=None):
-
-        def upload_file(file):
-            storage.save(file.name, file)
-
-        def check_in_memory_mime(in_memory_file):
-            mime = magic.from_buffer(in_memory_file.read(), mime=True)
-            return mime
-
-        queryset = get_object_or_404(self.get_queryset(), id=pk)
-        files = request.FILES.getlist('file')
-        storage = FileSystemStorage()
-
-        if files:
-            for item in files:
-
-                url = '{}{}'.format(storage.base_url, item.name)
-                if check_in_memory_mime(item) == 'image/jpeg':
-                    if storage.exists(item.name):
-                        storage.delete(item.name)
-                        upload_file(item)
-
-                        if url in queryset.photos:
-                            queryset.photos.remove(url)
-                            queryset.photos.append(url)
-                            queryset.save()
-
-                    else:
-                        upload_file(item)
-                        queryset.photos.append(url)
-                        queryset.save()
-                else:
-                    return Response(status=status.HTTP_400_BAD_REQUEST,
-                                    data={
-                                        'detail': 'Data {} is unsuported or file size is greater than 2MB. Your file size {} Bytes.'.format(
-                                            check_in_memory_mime(item), item.size)})
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST,
-                            data={'detail': 'Data files not set.'})
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# Override default DjangoModelPermissions permission in ItemViewSet
-# Removes POST, PATCH, PUT and DELETE options in request
-# Because this methods wont be used
-class ItemModelPermission(permissions.DjangoModelPermissions):
-    def __init__(self):
-        self.perms_map = copy.deepcopy(self.perms_map)  # from EunChong's answer
-        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
-        self.perms_map['POST'] = []
-        self.perms_map['PATCH'] = []
-        self.perms_map['PUT'] = []
-        self.perms_map['DELETE'] = []
-
-
-class ItemViewSet(viewsets.ViewSet):
-
-    # Override default method get_permissions to be able set customs permissions
-    def get_permissions(self):
-        return [IsAuthenticated(), ItemModelPermission()]
-
-    # ItemModelPermission require this method
-    def get_queryset(self):
-        return Item.objects.all()
-
-    # Get all items that contains pk
-    # This query_params is used to controll fields that will be returned
-    # query_params['all'] == 1 -> local network use
-    # query_params['all'] == 0 or not exist -> remote network use
-    def retrieve(self, request, pk=None):
-        queryset = self.get_queryset()
-
-        query_params = request.query_params.get('all')
-        queryset = queryset.filter(id__contains=pk) if query_params == '1' else queryset.filter(
-            id__contains=pk).values('id',
-                                    'brand',
-                                    'collection',
-                                    'type',
-                                    'genre')
-
-        if not queryset:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        # Use GenericItemSerializer to not display price, sku and specs fields. only remote use
-        # Use ItemSerializer to display all fields. only local use
-        serializer = ItemSerializer(queryset, many=True) if query_params == '1' else GenericItemSerializer(queryset,
-                                                                                                           many=True)
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
-
-
-# Use ItemModelPermission permission class
-# Used to get all the filters (brand, collection and type)
-class FilterViewSet(viewsets.ViewSet):
-
-    # Override default method get_permissions to be able set customs permissions
-    def get_permissions(self):
-        return [IsAuthenticated(), ItemModelPermission()]
-
-    # ItemModelPermission require this method
-    def get_queryset(self):
-        return Item.objects.all()
-
-    def list(self, request):
-        # query_params['all'] == 1 -> local network use
-        # query_params['all'] == 0 or not exist -> remote network use
-        query_params = request.query_params.get('all')
-
-        if query_params == '1':
-            queryset = self.get_queryset()
-
-            brand_queryset = queryset.values_list('brand', flat=True).distinct()
-            collection_queryset = queryset.values_list('collection', flat=True).distinct()
-            type_queryset = queryset.values_list('type', flat=True).distinct()
-            genre_queryset = queryset.values_list('genre', flat=True).distinct()
-
-            brand_serializer = GenericSerializer(brand_queryset, many=True)
-            collection_serializer = GenericSerializer(collection_queryset, many=True)
-            type_serializer = GenericSerializer(type_queryset, many=True)
-            genre_serializer = GenericSerializer(genre_queryset, many=True)
-
-            return Response(status=status.HTTP_200_OK,
-                            data={'brand': brand_serializer.data, 'collection': collection_serializer.data,
-                                  'type': type_serializer.data, 'genre': genre_serializer.data})
-
-        else:
-            # Get only photo objects that have lookbook, conceito or ecommerce photo
-            queryset = Photo.objects.filter(
-                Q(photos__contains='lookbook') | Q(photos__contains='conceito') | Q(
-                    photos__contains='ecommerce')).values('id')
-
-            # Get code from https://stackoverflow.com/q/30427465/11515091
-            # Get the previous queryset and check if Item objects contais some item on the list (query)
-            query = Q()
-            for item in queryset:
-                query = query | Q(id__contains=item['id'])
-
-            queryset = self.get_queryset().filter(query)
-
-            brand_queryset = queryset.values_list('brand', flat=True).distinct()
-            collection_queryset = queryset.values_list('collection', flat=True).distinct()
-            type_queryset = queryset.values_list('type', flat=True).distinct()
-            genre_queryset = queryset.values_list('genre', flat=True).distinct()
-
-            brand_serializer = GenericSerializer(brand_queryset, many=True)
-            collection_serializer = GenericSerializer(collection_queryset, many=True)
-            type_serializer = GenericSerializer(type_queryset, many=True)
-            genre_serializer = GenericSerializer(genre_queryset, many=True)
-
-            return Response(status=status.HTTP_200_OK,
-                            data={'brand': brand_serializer.data, 'collection': collection_serializer.data,
-                                  'type': type_serializer.data, 'genre': genre_serializer.data})
+            serializer = PhotoSerializer(queryset, many=True)
+            return Response(status=status.HTTP_200_OK, data=serializer.data)
