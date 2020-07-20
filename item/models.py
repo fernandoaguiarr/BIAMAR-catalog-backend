@@ -58,6 +58,7 @@ class Type(models.Model):
     class Meta:
         verbose_name = "Tipo de Produto"
         verbose_name_plural = "Tipos de Produtos"
+        ordering = ['id']
 
     def __str__(self): return self.name
 
@@ -80,6 +81,7 @@ class Season(models.Model):
     class Meta:
         verbose_name = "Coleção"
         verbose_name_plural = "Coleções"
+        ordering = ['-id']
 
     def __str__(self): return self.name
 
@@ -102,6 +104,7 @@ class Brand(models.Model):
     class Meta:
         verbose_name = "Marca"
         verbose_name_plural = "Marcas"
+        ordering = ['id']
 
     def __str__(self): return self.name
 
@@ -130,6 +133,7 @@ class Item(models.Model):
     class Meta:
         verbose_name = "Item"
         verbose_name_plural = "Itens"
+        ordering = ['-id']
 
     def __str__(self): return self.id
 
@@ -167,20 +171,22 @@ class TypePhoto(models.Model):
     class Meta:
         verbose_name = "Tipo de Foto"
         verbose_name_plural = "Tipos de Fotos"
+        ordering = ['id']
 
     def __str__(self): return self.name
 
 
 class Photo(models.Model):
     type = models.ForeignKey(TypePhoto, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     path = models.CharField(max_length=56)
-
     preview = models.BooleanField()
+
+    items = models.ManyToManyField(to=Item, auto_created=True)
 
     class Meta:
         verbose_name = "Foto"
         verbose_name_plural = "Fotos"
+        ordering = ['-id']
 
-    def __str__(self): return str(self.id) + " - " + str(self.color)
+    def __str__(self): return "{} - {}".format(self.color, self.type.name)
