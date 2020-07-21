@@ -1,11 +1,12 @@
 import json
+import re
 
 from django.db.models import Count
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from .models import Photo
-from .serializers import PhotoSerializer
+from .models import Photo, Item, Brand, Season, Type
+from .serializers import PhotoSerializer, ItemSerializer, BrandSerializer, SeasonSerializer, TypeSerializer
 
 
 class PhotoViewSet(viewsets.ViewSet):
@@ -56,3 +57,43 @@ class PhotoViewSet(viewsets.ViewSet):
         else:
             serializer = PhotoSerializer(queryset, many=True)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+class ItemViewSet(viewsets.ViewSet):
+
+    # ItemModelPermission require this method
+    def get_queryset(self):
+        return Item.objects.all()
+
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        regex = re.compile("^(0{2}[0-9]{4})")
+
+        # if item id validation fails raise ValueError exception
+        try:
+            if bool(regex.search(pk)):
+                queryset = queryset.filter(group=pk)
+                serializer = ItemSerializer(queryset, many=True)
+                return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+            else:
+                raise ValueError
+
+        except ValueError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class BrandViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+
+
+class SeasonViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Season.objects.all()
+    serializer_class = SeasonSerializer
+
+
+class TypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Type.objects.all()
+    serializer_class = TypeSerializer
+
