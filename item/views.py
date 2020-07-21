@@ -1,15 +1,42 @@
-import json
+import copy
 import re
 
 from django.db.models import Count
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Photo, Item, Brand, Season, Type
-from .serializers import PhotoSerializer, ItemSerializer, BrandSerializer, SeasonSerializer, TypeSerializer
+from .models import Photo, Item, Brand, Season, Type, TypePhoto
+from .serializers import PhotoSerializer, ItemSerializer, BrandSerializer, SeasonSerializer, TypeSerializer, \
+    TypePhotoSerializer
+
+
+class PhotoModelPermission(permissions.DjangoModelPermissions):
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)  # you need deepcopy when you inherit a dictionary type
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
+        self.perms_map['POST'] = []
+        self.perms_map['PUT'] = []
+        self.perms_map['PATCH'] = ['%(app_label)s.view_%(model_name)s']
+        self.perms_map['DELETE'] = []
+
+
+class CustomDjangoModelPermission(permissions.DjangoModelPermissions):
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)  # you need deepcopy when you inherit a dictionary type
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s']
+        self.perms_map['POST'] = []
+        self.perms_map['PUT'] = []
+        self.perms_map['PATCH'] = []
+        self.perms_map['DELETE'] = []
 
 
 class PhotoViewSet(viewsets.ViewSet):
+
+    def get_permissions(self):
+        return [IsAuthenticated(), PhotoModelPermission()]
 
     # PhotoModelPermission require this method
     def get_queryset(self):
@@ -46,7 +73,7 @@ class PhotoViewSet(viewsets.ViewSet):
                     except ValueError:
                         return Response(status.HTTP_401_UNAUTHORIZED)
 
-                # Raise StopIteration if lambdas function return is None
+                # Raise StopIteration if lambda function return is None
                 except StopIteration:
                     return Response(status.HTTP_401_UNAUTHORIZED)
 
@@ -55,11 +82,15 @@ class PhotoViewSet(viewsets.ViewSet):
             serializer = PhotoSerializer(queryset, many=True)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
         else:
+            queryset = queryset.annotate(dcount=Count('items__group'))
             serializer = PhotoSerializer(queryset, many=True)
             return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 
 class ItemViewSet(viewsets.ViewSet):
+
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
 
     # ItemModelPermission require this method
     def get_queryset(self):
@@ -84,16 +115,35 @@ class ItemViewSet(viewsets.ViewSet):
 
 
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
+
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
+
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
 
 
 class SeasonViewSet(viewsets.ReadOnlyModelViewSet):
+
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
+
     queryset = Season.objects.all()
     serializer_class = SeasonSerializer
 
 
 class TypeViewSet(viewsets.ReadOnlyModelViewSet):
+
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
+
     queryset = Type.objects.all()
     serializer_class = TypeSerializer
 
+
+class TypePhoto(viewsets.ReadOnlyModelViewSet):
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
+
+    queryset = TypePhoto.objects.all()
+    serializer_class = TypePhotoSerializer
