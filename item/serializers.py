@@ -1,9 +1,14 @@
 from rest_framework import serializers
-
-from .models import Item, Photo, Brand, Type, Season
+from .models import Item, Photo, Brand, Type, Season, TypePhoto
 
 
 class PhotoSerializer(serializers.ModelSerializer):
+    items = serializers.SlugRelatedField(
+        read_only=True,
+        many=True,
+        slug_field='id'
+    )
+
     class Meta:
         model = Photo
         fields = ('id', 'path', 'preview', 'type', 'items')
@@ -30,4 +35,10 @@ class TypeSerializer(serializers.ModelSerializer):
 class SeasonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Season
+        fields = '__all__'
+
+
+class TypePhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TypePhoto
         fields = '__all__'
