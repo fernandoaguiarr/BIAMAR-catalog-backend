@@ -109,6 +109,19 @@ class Brand(models.Model):
     def __str__(self): return self.name
 
 
+class Group(models.Model):
+    id = models.CharField(
+        primary_key=True,
+        max_length=16,
+        null=False
+    )
+
+    class Meta:
+        verbose_name = "Grupo"
+        verbose_name_plural = "Grupos"
+        ordering = ['-id']
+
+
 class Item(models.Model):
     id = models.CharField(
         primary_key=True,
@@ -116,16 +129,13 @@ class Item(models.Model):
         null=False
     )
 
-    group = models.CharField(
-        max_length=16,
-        null=False
-    )
-
     genre = models.CharField(
         max_length=16,
-        null=True,
+        null=True
     )
+
     price = models.CharField(max_length=8, null=True)
+    group = models.ForeignKey(Group, related_name="item_group", on_delete=models.CASCADE)
     type = models.ForeignKey(Type, related_name="item_type", on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
     season = models.ForeignKey(Season, related_name="season_type", on_delete=models.CASCADE)
@@ -177,12 +187,11 @@ class TypePhoto(models.Model):
 
 
 class Photo(models.Model):
+    group = models.ForeignKey(Group, related_name="photo_group", on_delete=models.CASCADE)
     type = models.ForeignKey(TypePhoto, on_delete=models.CASCADE)
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    path = models.CharField(max_length=56)
+    path = models.ImageField(upload_to='photos/')
     preview = models.BooleanField()
-
-    items = models.ManyToManyField(to=Item, auto_created=True)
 
     class Meta:
         verbose_name = "Foto"

@@ -7,7 +7,7 @@ import requests
 from django.core.exceptions import ObjectDoesNotExist, FieldError
 from django.core.management import BaseCommand, call_command
 
-from item.models import Color, Size, Season, Type, Brand, Item, Sku
+from item.models import Color, Size, Season, Type, Brand, Item, Sku, Group
 
 
 def request_package_data(package_id, token):
@@ -176,6 +176,10 @@ class Command(BaseCommand):
                         try:
                             pattern = bool(regex.search(item_id))
                             if pattern:
+
+                                group = Group(id=item_id.split(" ")[-1])
+                                group.save()
+
                                 item_genre = (self.get_specification(1, data['tiposClassificacao'],
                                                                      ref['SKUs'][0]['classificacoesSKU']))
                                 item_type = (self.get_specification(110, data['tiposClassificacao'],
@@ -200,7 +204,7 @@ class Command(BaseCommand):
                                     else:
                                         item = Item(
                                             id=item_id,
-                                            group=item_id.split(" ")[-1],
+                                            group=group,
                                             genre=item_genre['dsClassificacao'] if item_genre else None,
                                             type=Type.objects.get(id=int(item_type['cdClassificacao'])),
                                             brand=Brand.objects.get(id=int(item_brand['cdClassificacao'])),

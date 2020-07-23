@@ -3,15 +3,9 @@ from .models import Item, Photo, Brand, Type, Season, TypePhoto
 
 
 class PhotoSerializer(serializers.ModelSerializer):
-    items = serializers.SlugRelatedField(
-        read_only=True,
-        many=True,
-        slug_field='id'
-    )
-
     class Meta:
         model = Photo
-        fields = ('id', 'path', 'preview', 'type', 'items')
+        fields = ('id', 'path', 'preview', 'type', 'group')
 
 
 class ItemSerializer(serializers.ModelSerializer):
