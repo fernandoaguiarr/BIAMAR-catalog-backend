@@ -9,20 +9,6 @@ from django.core.management import BaseCommand, call_command
 from ...models import Item, Specs, Sku, Type, Brand, Collection, Photo
 
 
-def join_duplicate_keys(ordered_pairs):
-    d = {}
-    for k, v in ordered_pairs:
-        if k in d:
-            if type(d[k]) == list:
-                d[k].append(v)
-            else:
-                newlist = [d[k], v]
-                d[k] = newlist
-        else:
-            d[k] = v
-    return d
-
-
 def get_package(id_package, token):
     header = {
         'Authorization': 'Bearer {}'.format(token),
@@ -35,7 +21,7 @@ def get_package(id_package, token):
     response = requests.post("https://www30.bhan.com.br:9443/api/v1/pacote/conteudo", headers=header,
                              data=json.dumps(body))
 
-    return json.loads(response.content, object_pairs_hook=join_duplicate_keys)
+    return json.loads(response.content)
 
 
 def add_color(id, colors):
@@ -83,14 +69,14 @@ def add_specs(specs, package_specs, model_object):
                                   'cdClassificacaoSKU'],
                               name=package_specs[j]['dsTipoclas'],
                               description=add_description(specs[i]['cdClassificacaoSKU'],
-                                                          package_specs[j]['classificacao'])))
+                                                          package_specs[j]['classificacoes'])))
 
             # Add brand
             if package_specs[j]['cdTipoclas'] == 7:
                 if specs[i]['cdTipoClasSKU'] == package_specs[j]['cdTipoclas']:
                     model_object.collection.id = specs[i]['cdClassificacaoSKU']
                     model_object.collection.season = add_description(specs[i]['cdClassificacaoSKU'],
-                                                                     package_specs[j]['classificacao'])
+                                                                     package_specs[j]['classificacoes'])
 
 
 def add_addicional_field(addicional_field, package_addicional_field, model_object):
@@ -104,6 +90,7 @@ def add_addicional_field(addicional_field, package_addicional_field, model_objec
 
     for i in range(len(addicional_field)):
         for j in range(len(package_addicional_field)):
+            print(addicional_field[i])
             if addicional_field[i]['cdCampoAdicSKU'] == package_addicional_field[j]['cdCampoAdic']:
                 model_object.additional_field.append(
                     Sku.AdditionalField(
@@ -126,8 +113,8 @@ class Command(BaseCommand):
         #                       object_pairs_hook=join_duplicate_keys)
 
         packages = eval(packages.getvalue())  # convert StringIO to dict
-        dirs = os.listdir('C:/Users/faguiar/Desktop/test/media')
-        #dirs = os.listdir('media/importar')
+        # dirs = os.listdir('C:/Users/faguiar/Desktop/test/media')
+        # dirs = os.listdir('media/importar')
         errors = []
 
         if 'pacotes' not in packages:
@@ -137,7 +124,8 @@ class Command(BaseCommand):
                 print("\nPACOTE", package_len)
 
                 package = get_package(packages['pacotes'][package_len]['cdPacote'], token.getvalue().replace("\n", ""))
-                data = package['dados']['referencia']
+                print(package.keys())
+                data = package['referencias']
 
                 if isinstance(data, dict):  # Test if data is dict, if true append to list
                     aux = data
@@ -147,11 +135,11 @@ class Command(BaseCommand):
                     # Check if referencia isn't in pattern
                     if not (len(data[i]['cdRef'].split()) == 3 and len(data[i]['cdRef'].split()[2])) == 6:
 
-                        if isinstance(data[i]['SKU'], dict):
-                            aux = data[i]['SKU']
-                            data[i]['SKU'] = [aux]
+                        if isinstance(data[i]['SKUs'], dict):
+                            aux = data[i]['SKUs']
+                            data[i]['SKUs'] = [aux]
 
-                        errors.append({"referencia": data[i]['cdRef'], "sku": data[i]['SKU'][0]['nrProdutoSKU']})
+                        errors.append({"referencia": data[i]['cdRef'], "sku": data[i]['SKUs'][0]['nrProdutoSKU']})
 
                     else:
                         # Check in db if referencia exist
@@ -161,10 +149,11 @@ class Command(BaseCommand):
 
                         if not Photo.objects.filter(id=data[i]['cdRef'].split()[2]).exists():
                             photo = Photo(id=data[i]['cdRef'].split()[2])
-                            for file in dirs:
-                                if photo.id in file:
-                                    # print(photo.id)
-                                    photo.front_photo.save(file, File(open('C:/Users/faguiar/Desktop/test/media/{}'.format(file), 'rb')))
+                            #     for file in dirs:
+                            #         if photo.id in file:
+                            #             # print(photo.id)
+                            #             photo.front_photo.save(file, File(
+                            #                 open('C:/Users/faguiar/Desktop/test/media/{}'.format(file), 'rb')))
                             photo.save()
 
                         # create a instance of model classes
@@ -178,38 +167,38 @@ class Command(BaseCommand):
                         product.specs = []
 
                         product.id = data[i]['cdRef']
-                        product.brand.id = data[i]['nivel'][1]['cdGrupoNivel']
-                        product.brand.name = data[i]['nivel'][1]['dsGrupoNivel']
-                        product.type.id = data[i]['nivel'][0]['cdGrupoNivel']
-                        product.type.name = data[i]['nivel'][0]['dsGrupoNivel']
+                        product.brand.id = data[i]['niveis'][1]['cdGrupoNivel']
+                        product.brand.name = data[i]['niveis'][1]['dsGrupoNivel']
+                        product.type.id = data[i]['niveis'][0]['cdGrupoNivel']
+                        product.type.name = data[i]['niveis'][0]['dsGrupoNivel']
 
                         # Test if data['SKU'] is a dict, if true append to list
-                        if isinstance(data[i]['SKU'], dict):
-                            aux = data[i]['SKU']
-                            data[i]['SKU'] = [aux]
+                        if isinstance(data[i]['SKUs'], dict):
+                            aux = data[i]['SKUs']
+                            data[i]['SKUs'] = [aux]
 
-                        for j in range(len(data[i]['SKU'])):
+                        for j in range(len(data[i]['SKUs'])):
 
-                            product.sku.append(Sku(id=data[i]['SKU'][j]['cdProdutoSKU'],
-                                                   sku=data[i]['SKU'][j]['nrProdutoSKU'],
+                            product.sku.append(Sku(id=data[i]['SKUs'][j]['cdProdutoSKU'],
+                                                   sku=data[i]['SKUs'][j]['nrProdutoSKU'],
                                                    # id_cor=(data[i]['SKU'][j]['cdCorSKU']),
                                                    # cor=insert_color(data[i]['SKU'][j]['cdCorSKU'],
                                                    #                  package['dados']['cor']),
-                                                   weight=data[i]['SKU'][j]['qtPesoSKU'],
-                                                   size=data[i]['SKU'][j]['dsTamanhoSKU']))
+                                                   weight=data[i]['SKUs'][j]['qtPesoSKU'],
+                                                   size=data[i]['SKUs'][j]['dsTamanhoSKU']))
 
                             product.sku[j].color = Sku.Color()
-                            product.sku[j].color.id = data[i]['SKU'][j]['cdCorSKU']
-                            product.sku[j].color.name = add_color(data[i]['SKU'][j]['cdCorSKU'],
-                                                                  package['dados']['cor'])
+                            product.sku[j].color.id = data[i]['SKUs'][j]['cdCorSKU']
+                            product.sku[j].color.name = add_color(data[i]['SKUs'][j]['cdCorSKU'],
+                                                                  package['cores'])
 
-                            if data[i]['SKU'][j]['valorSKU']['vlValorSKU'] != '0':
-                                product.price = data[i]['SKU'][j]['valorSKU']['vlValorSKU']
+                            if data[i]['SKUs'][j]['valoresSKU'][0]['vlValorSKU'] != '0':
+                                product.price = data[i]['SKUs'][j]['valoresSKU'][0]['vlValorSKU']
 
                             # Test if values are None to avoid duplicated values in Classificacao model
                             if not product.collection.season and not product.specs:
-                                add_specs(data[i]['SKU'][j]['classificacaoSKU'],
-                                          package['dados']['tipoClassificacao'], product)
+                                add_specs(data[i]['SKUs'][j]['classificacoesSKU'],
+                                          package['tiposClassificacao'], product)
 
                             # Create a list of Campo Adicional model class
                             product.sku[j].additional_field = []
@@ -217,9 +206,9 @@ class Command(BaseCommand):
                             # Test if 'campoAdicional' and 'campoAdicSKU' keys exist in package and data,
                             # if true insert values in product.campo_adicional
 
-                            if 'campoAdicional' in package['dados'] and 'campoAdicSKU' in data[i]['SKU'][j]:
-                                add_addicional_field(data[i]['SKU'][j]['campoAdicSKU'],
-                                                     package['dados']['campoAdicional'], product.sku[j])
+                            # if 'camposAdicionais' in package and 'camposAdicSKU' in data[i]['SKUs'][j]:
+                            #     add_addicional_field(data[i]['SKUs'][j]['camposAdicSKU'],
+                            #                          package['camposAdicionais'], product.sku[j])
                         # Save product instance
                         product.save()
 
@@ -227,4 +216,4 @@ class Command(BaseCommand):
             if errors:
                 print("######## REFERÊNCIAS NÃO CADASTRADAS ########")
                 for i in range(len(errors)):
-                    print("Referência: ", errors[i]['referencia'], "SKU: ", errors[i]['sku'])
+                    print("Referência: ", errors[i]['referencia'], "SKUs: ", errors[i]['sku'])
