@@ -12,6 +12,7 @@ class Size(models.Model):
         return self.description
 
     class Meta:
+        app_label = "item"
         verbose_name = "Grade"
         verbose_name_plural = "Grades"
 
@@ -37,6 +38,7 @@ class Color(models.Model):
         return self.name
 
     class Meta:
+        app_label = "item"
         verbose_name = "Cor"
         verbose_name_plural = "Cores"
 
@@ -60,6 +62,7 @@ class Type(models.Model):
         return self.name
 
     class Meta:
+        app_label = "item"
         verbose_name = "Tipo de Produto"
         verbose_name_plural = "Tipos de Produtos"
         ordering = ['id']
@@ -84,6 +87,7 @@ class Season(models.Model):
         return self.name
 
     class Meta:
+        app_label = "item"
         verbose_name = "Coleção"
         verbose_name_plural = "Coleções"
         ordering = ['-id']
@@ -108,6 +112,7 @@ class Brand(models.Model):
         return self.name
 
     class Meta:
+        app_label = "item"
         verbose_name = "Marca"
         verbose_name_plural = "Marcas"
         ordering = ['id']
@@ -124,6 +129,7 @@ class Group(models.Model):
         return "{}".format(self.id)
 
     class Meta:
+        app_label = "item"
         verbose_name = "Grupo"
         verbose_name_plural = "Grupos"
         ordering = ['-id']
@@ -151,6 +157,7 @@ class Item(models.Model):
         return self.id
 
     class Meta:
+        app_label = "item"
         verbose_name = "Item"
         verbose_name_plural = "Itens"
         ordering = ['-id']
@@ -180,6 +187,7 @@ class Sku(models.Model):
         return self.id
 
     class Meta:
+        app_label = "item"
         verbose_name = "SKU"
         verbose_name_plural = "SKUs"
 
@@ -191,7 +199,8 @@ class TypePhoto(models.Model):
         return self.name
 
     class Meta:
-        db_table = "type_photo"
+        app_label = "item"
+        db_table = "item_type_photo"
         verbose_name = "Tipo de Foto"
         verbose_name_plural = "Tipos de Fotos"
         ordering = ['id']
@@ -208,6 +217,7 @@ class Photo(models.Model):
         return "{} / {} - {}".format(self.group.id, self.color, self.type.name)
 
     class Meta:
+        app_label = "item"
         verbose_name = "Foto"
         verbose_name_plural = "Fotos"
         ordering = ['-id']

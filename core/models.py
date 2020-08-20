@@ -28,6 +28,7 @@ class VirtualAgeToken(models.Model):
         return "Token {}".format(self.id)
 
     class Meta:
-        db_table = "token_virtual_age"
+        app_label = "core"
+        db_table = "core_token_virtual_age"
         verbose_name = "Token Virtual Age"
         verbose_name_plural = "Tokens Virtual Age"
