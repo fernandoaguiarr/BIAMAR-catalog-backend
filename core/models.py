@@ -11,3 +11,23 @@ from rest_framework.authtoken.models import Token
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
+
+
+class VirtualAgeToken(models.Model):
+    code = models.TextField(
+        null=False,
+        blank=False
+    )
+
+    date = models.DateTimeField(
+        null=False,
+        blank=False,
+    )
+
+    def __str__(self):
+        return "Token {}".format(self.id)
+
+    class Meta:
+        db_table = "token_virtual_age"
+        verbose_name = "Token Virtual Age"
+        verbose_name_plural = "Tokens Virtual Age"
