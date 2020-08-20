@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from core.models import VirtualAgeToken
+
+
+@admin.register(VirtualAgeToken)
+class VirtualAgeTokenAdmin(admin.ModelAdmin):
+    fields = ('code', 'date')
