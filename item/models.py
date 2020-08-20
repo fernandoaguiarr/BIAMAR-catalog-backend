@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.postgres.fields import ArrayField, JSONField
 
 
 class Size(models.Model):
@@ -9,11 +8,12 @@ class Size(models.Model):
         verbose_name="Tamanho"
     )
 
+    def __str__(self):
+        return self.description
+
     class Meta:
         verbose_name = "Grade"
         verbose_name_plural = "Grades"
-
-    def __str__(self): return self.description
 
 
 class Color(models.Model):
@@ -33,11 +33,12 @@ class Color(models.Model):
         verbose_name="Nome"
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = "Cor"
         verbose_name_plural = "Cores"
-
-    def __str__(self): return self.name
 
 
 class Type(models.Model):
@@ -55,12 +56,13 @@ class Type(models.Model):
         verbose_name="Nome"
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = "Tipo de Produto"
         verbose_name_plural = "Tipos de Produtos"
         ordering = ['id']
-
-    def __str__(self): return self.name
 
 
 class Season(models.Model):
@@ -78,12 +80,13 @@ class Season(models.Model):
         verbose_name="Nome"
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = "Coleção"
         verbose_name_plural = "Coleções"
         ordering = ['-id']
-
-    def __str__(self): return self.name
 
 
 class Brand(models.Model):
@@ -101,12 +104,13 @@ class Brand(models.Model):
         verbose_name="Nome"
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = "Marca"
         verbose_name_plural = "Marcas"
         ordering = ['id']
-
-    def __str__(self): return self.name
 
 
 class Group(models.Model):
@@ -115,6 +119,9 @@ class Group(models.Model):
         max_length=16,
         null=False
     )
+
+    def __str__(self):
+        return "{}".format(self.id)
 
     class Meta:
         verbose_name = "Grupo"
@@ -140,12 +147,13 @@ class Item(models.Model):
     brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
     season = models.ForeignKey(Season, related_name="season_type", on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.id
+
     class Meta:
         verbose_name = "Item"
         verbose_name_plural = "Itens"
         ordering = ['-id']
-
-    def __str__(self): return self.id
 
 
 class Sku(models.Model):
@@ -166,24 +174,27 @@ class Sku(models.Model):
 
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     size = models.ForeignKey(Size, on_delete=models.CASCADE)
-    id_item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.id
 
     class Meta:
         verbose_name = "SKU"
         verbose_name_plural = "SKUs"
 
-    def __str__(self): return self.id
-
 
 class TypePhoto(models.Model):
     name = models.CharField(max_length=32, null=False)
 
+    def __str__(self):
+        return self.name
+
     class Meta:
+        db_table = "type_photo"
         verbose_name = "Tipo de Foto"
         verbose_name_plural = "Tipos de Fotos"
         ordering = ['id']
-
-    def __str__(self): return self.name
 
 
 class Photo(models.Model):
@@ -193,9 +204,10 @@ class Photo(models.Model):
     path = models.ImageField(upload_to='photos/')
     preview = models.BooleanField()
 
+    def __str__(self):
+        return "{} / {} - {}".format(self.group.id, self.color, self.type.name)
+
     class Meta:
         verbose_name = "Foto"
         verbose_name_plural = "Fotos"
         ordering = ['-id']
-
-    def __str__(self): return "{} - {}".format(self.color, self.type.name)
