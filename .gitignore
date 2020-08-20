@@ -1,3 +1,4 @@
-/item/migrations/
-/logs/errors.log
 /media/
+/logs/errors.log
+/core/migrations/
+/item/migrations/
