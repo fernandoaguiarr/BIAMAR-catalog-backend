@@ -88,7 +88,7 @@ DATABASES = {
     },
     'item': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'biamar_produtos-teste',
+        'NAME': 'biamar_django-produtos',
         'USER': 'django-admin',
         'PASSWORD': 'elY:O$dfJt6!RB0|T0rX',
         'HOST': '192.168.3.7',  # Or an IP Address that your DB is hosted on
@@ -191,5 +191,4 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Media configs
-MEDIA_URL = '/media/'
-MEDIA_ROOT = 'C:/Users/faguiar/PycharmProjects/photos-backendmedia'
+MEDIA_URL = '/media_dev/'
