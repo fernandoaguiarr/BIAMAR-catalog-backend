@@ -1,14 +1,13 @@
 import json
-
 import requests
+
 from django.core.management import BaseCommand
-
-
-# from ...models import Token
+from django.utils import timezone
+from ...models import VirtualAgeToken as Token
 
 
 class Command(BaseCommand):
-    help = 'Check if token exist, if false request a new token'
+    help = 'Return Virtual age token.'
 
     @staticmethod
     def get_token():
@@ -18,11 +17,10 @@ class Command(BaseCommand):
         return response['cdToken']
 
     def handle(self, *args, **options):
-        return self.get_token()
-        # token = Token.objects.last()
-        # if token and token.date > timezone.now():
-        #     return token.token
-        # else:
-        #     t = Token(token=self.get_token(), date=timezone.now() + timezone.timedelta(days=1))
-        #     t.save()
-        #     return t.token
+        token = Token.objects.last()
+        if token and token.date > timezone.now():
+            return token.code
+        else:
+            t = Token(code=self.get_token(), date=timezone.now() + timezone.timedelta(days=1))
+            t.save()
+            return t.code
