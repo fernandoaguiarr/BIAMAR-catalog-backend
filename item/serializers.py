@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item, Photo, Brand, Type, Season, TypePhoto
+from .models import Item, Photo, Brand, Type, Season, TypePhoto, Sku, Group
 
 
 class PhotoSerializer(serializers.ModelSerializer):
@@ -8,9 +8,23 @@ class PhotoSerializer(serializers.ModelSerializer):
         fields = ('id', 'path', 'preview', 'type', 'group')
 
 
+class GroupSerializer(serializers.ModelSerializer):
+    photo_group__path = serializers.CharField()
+
+    class Meta:
+        model = Group
+        fields = ('id', 'photo_group__path')
+
+
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
+        fields = '__all__'
+
+
+class SkuSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sku
         fields = '__all__'
 
 

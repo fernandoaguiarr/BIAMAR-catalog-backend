@@ -1,17 +1,18 @@
 import copy
 import re
+from collections import defaultdict
 
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import ObjectDoesNotExist, FieldError, ValidationError
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Photo, Item, Brand, Season, Type, TypePhoto, Color, Group
+from .models import Photo, Item, Brand, Season, Type, TypePhoto, Color, Group, Sku
 from .serializers import PhotoSerializer, ItemSerializer, BrandSerializer, SeasonSerializer, TypeSerializer, \
-    TypePhotoSerializer
+    TypePhotoSerializer, SkuSerializer, GroupSerializer
 
 
 class PhotoModelPermission(permissions.DjangoModelPermissions):
@@ -249,6 +250,92 @@ class PhotoViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+class GroupViewSet(viewsets.ViewSet):
+
+    def group_by(self, groups):
+        res = {}
+        for d in groups:
+            res.setdefault(d['id'], []).append(d['photo_group__path'])
+
+        groups_list = []
+        for key in res.keys():
+            paths = res[key]
+            if paths[0] is None:
+                paths.pop(0)
+
+            groups_list.append({'id': key, 'paths': paths})
+
+        return groups_list
+
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
+
+    # CustomDjangoModelPermission require this method
+    def get_queryset(self):
+        return Group.objects.all()
+
+    def list(self, request):
+
+        # Query Params supported
+        list_fields = ['id__icontains', 'item_group__brand__id', 'item_group__season__id',
+                       'item_group__type__id', 'photo_group__preview']
+
+        queryset = self.get_queryset()
+        query_params = request.query_params
+
+        filters = {}
+        preview = None
+
+        if query_params:
+            for item in query_params:
+                try:
+                    # Return the list_field item that have substring item
+                    key = next(filter(lambda k: item in k, list_fields))
+                    filters = {**filters, **{key: query_params[item]}}
+
+                    # Convert filters dict values to correct types
+                    try:
+                        if 'photo_group__preview' == key:
+                            if filters[key].lower() == 'true':
+                                filters[key] = True
+                            elif filters[key].lower() == 'false':
+                                filters[key] = False
+                            else:
+                                raise ValueError
+
+                        if 'photo_group__preview' in filters:
+                            preview = {'photo_group__preview': filters['photo_group__preview']}
+                            del filters['photo_group__preview']
+
+                    # Raise ValueError if it was not possible convert
+                    except ValueError:
+                        return Response(status.HTTP_401_UNAUTHORIZED)
+
+                # Raise StopIteration if lambda function return is None
+                except StopIteration:
+                    return Response(status.HTTP_401_UNAUTHORIZED)
+            # queryset = queryset.filter(**filters).values('id', 'photo_group__path', 'photo_group__preview')
+
+            if preview is not None:
+                q1 = Q(**preview)
+                q2 = Q(photo_group=None)
+                queryset = queryset.filter(q1 | q2, **filters).values('id', 'photo_group__path',
+                                                                      'photo_group__preview').distinct()
+            else:
+                queryset = queryset.filter(**filters).values('id', 'photo_group__path',
+                                                             'photo_group__preview').distinct()
+
+            serializer = GroupSerializer(queryset, many=True)
+            groups = self.group_by(serializer.data)
+
+            return Response(status=status.HTTP_200_OK, data=groups)
+        else:
+            serializer = GroupSerializer(queryset.values('id', 'photo_group__path'), many=True)
+            groups = self.group_by(serializer.data)
+
+            return Response(status=status.HTTP_200_OK, data=groups)
+
+
 class ItemViewSet(viewsets.ViewSet):
 
     def get_permissions(self):
@@ -267,6 +354,31 @@ class ItemViewSet(viewsets.ViewSet):
             if bool(regex.search(pk)):
                 queryset = queryset.filter(group=pk)
                 serializer = ItemSerializer(queryset, many=True)
+                return Response(status=status.HTTP_200_OK, data=serializer.data)
+            else:
+                raise ValueError
+
+        except ValueError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class SkuViewSet(viewsets.ViewSet):
+    def get_permissions(self):
+        return [IsAuthenticated(), CustomDjangoModelPermission()]
+
+    # ItemModelPermission require this method
+    def get_queryset(self):
+        return Sku.objects.all()
+
+    def retrieve(self, request, pk=None):
+        queryset = self.get_queryset()
+        regex = re.compile("^(0{2}[0-9]{4})")
+
+        # if item id validation fails raise ValueError exception
+        try:
+            if bool(regex.search(pk)):
+                queryset = queryset.filter(id_item__group=pk)
+                serializer = SkuSerializer(queryset, many=True)
                 return Response(status=status.HTTP_200_OK, data=serializer.data)
             else:
                 raise ValueError
