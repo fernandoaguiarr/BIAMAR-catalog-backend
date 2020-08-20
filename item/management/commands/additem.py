@@ -148,7 +148,7 @@ class Command(BaseCommand):
         packages = io.StringIO()
 
         call_command('gettoken', stdout=token)  # call command and get token value from console
-        call_command('getpackages', stdout=packages)  # call command and get packages from console
+        call_command('getpackages', 3001, stdout=packages)  # call command and get packages from console
         packages = eval(packages.getvalue())
 
         if 'pacotes' not in packages:

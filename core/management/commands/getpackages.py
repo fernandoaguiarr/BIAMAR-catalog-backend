@@ -7,7 +7,12 @@ from django.utils import timezone
 
 
 class Command(BaseCommand):
-    help = 'Look for available packages'
+    help = 'List available virtual age packages.'
+
+    def add_arguments(self, parser):
+        parser.add_argument('package_id',
+                            type=int,
+                            help='Set package id')
 
     def handle(self, *args, **options):
         token = io.StringIO()
@@ -18,8 +23,9 @@ class Command(BaseCommand):
             'Authorization': 'Bearer {}'.format(token.getvalue().replace("\n", "")),
             'Content-Type': 'application/json'
         }
+
         body = {
-            "cdModPac": "3001",
+            "cdModPac": "{}".format(options['package_id']),
             "cdDestino": "91037952000135",
             "dtInclusaoInicio": (timezone.now()).strftime("%d/%m/%Y"),
             "dtInclusaoFim": (timezone.now() + timezone.timedelta(days=1)).strftime("%d/%m/%Y")
