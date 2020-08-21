@@ -5,7 +5,7 @@ from .models import Item, Photo, Brand, Type, Season, TypePhoto, Sku, Group
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
-        fields = ('id', 'path', 'preview', 'type', 'group')
+        fields = ('id', 'group', 'type', 'color', 'path', 'preview')
 
 
 class GroupSerializer(serializers.ModelSerializer):

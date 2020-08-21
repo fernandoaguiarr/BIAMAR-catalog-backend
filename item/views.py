@@ -1,6 +1,6 @@
 import copy
 import re
-from collections import defaultdict
+from uuid import uuid4
 
 from django.core.files.storage import FileSystemStorage
 from django.core.exceptions import ObjectDoesNotExist, FieldError, ValidationError
@@ -63,8 +63,7 @@ class PhotoViewSet(viewsets.ViewSet):
 
     def list(self, request):
         # Query Params supported
-        list_fields = ['group__id__icontains', 'group__item_group__brand__id', 'group__item_group__season__id',
-                       'group__item_group__type__id', 'preview']
+        list_fields = ['group__id__icontains', 'type', 'color', 'preview']
 
         queryset = self.get_queryset()
         query_params = request.query_params
@@ -164,7 +163,7 @@ class PhotoViewSet(viewsets.ViewSet):
                 type_photo = TypePhoto.objects.get(id=int(filters['type__id']))
 
                 # Generate file name based on group id, color id and type photo id
-                file_name = "photos/{}.jpg".format(hash("{}{}".format(group.id, color.id, type_photo.id)))
+                file_name = "photos/{}.jpg".format(uuid4().hex)
 
                 # Save photo in /media/photos
                 self.storage_save(file=file, file_name=file_name)
