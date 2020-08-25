@@ -21,18 +21,15 @@ def request_package_data(package_id, token):
     return json.loads(response.content)
 
 
-def deactivate_package(package_id, token):
-    token = token.replace("\n", "")
-    response = requests.post("https://www30.bhan.com.br:9443/api/v1/pacote/envio",
-                             headers={'Authorization': 'Bearer {}'.format(token),
-                                      'Content-Type': 'application/json'
-                                      },
-                             data=json.dumps({'cdPacote': package_id}))
+def deactivate_package(package_id):
+    result = io.StringIO()
+    call_command("deactivatepackage", package_id, stdout=result)
 
-    return response
+    result = result.getvalue().replace("\n", "")
+    return True if result.lower() == 'true' else False
 
 
-def generate_id(levels):
+def create_id(levels):
     id = list()
     for level in levels:
         id.append(level['cdGrupoNivel'])
@@ -102,7 +99,7 @@ class Command(BaseCommand):
 
             item_sku = Sku(
                 id=sku['nrProdutoSKU'],
-                id_item=item,
+                item=item,
                 ean=sku['cdProdutoSKU'],
                 color=color,
                 size=size,
@@ -171,10 +168,10 @@ class Command(BaseCommand):
                 if 'referencias' in data:
                     regex = re.compile("^[0-9]{2} [0-9]{2} (0{2}[0-9]{4})")
                     for ref in data['referencias']:
-                        item_id = generate_id(ref['niveis'])
+                        item_id = create_id(ref['niveis'])
 
                         try:
-                            pattern = bool(regex.search(item_id))
+                            pattern = bool(regex.fullmatch(item_id))
                             if pattern:
 
                                 group = Group(id=item_id.split(" ")[-1])
@@ -219,9 +216,9 @@ class Command(BaseCommand):
 
                                 except ObjectDoesNotExist:
                                     self.logger.error(
-                                        "Some field reference doesn't exist. Brand id: {}; Season id: {}; Type id: {}"
-                                            .format(item_brand['cdClassificacao'], item_season['cdClassificacao'],
-                                                    item_type['cdClassificacao']))
+                                        "Some field reference doesn't exist. Brand id: {}; Season id: {}; Type id: {}".format(
+                                            item_brand['cdClassificacao'], item_season['cdClassificacao'],
+                                            item_type['cdClassificacao']))
                                 except FieldError as error:
                                     self.logger.info(error)
                             else:
@@ -229,6 +226,7 @@ class Command(BaseCommand):
                         except FieldError as error:
                             print("Item id {} isn't in pattern".format(error))
 
-                response = deactivate_package(package_id['cdPacote'], token.getvalue())
-                self.logger.info(
-                    "Package validated. Http Status:{}".format(response.status_code))
+                result = deactivate_package(package_id['cdPacote'])
+                self.logger.info("Package ({}) succesfully deactivated.".format(
+                    package_id['cdPacote'])) if result else self.logger.warning(
+                    "Package ({}) wasn't deactivated.".format(package_id['cdPacote']))
