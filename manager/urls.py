@@ -18,6 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.authtoken import views
 
+from django.conf import settings
+from django.conf.urls.static import static
+
+admin.site.site_header = "Biamar Malhas Administration"
+admin.site.index_title = "Item Manager"
+admin.site.site_url = None
+admin.site.site_title = "Biamar Malhas"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('item.urls')),
