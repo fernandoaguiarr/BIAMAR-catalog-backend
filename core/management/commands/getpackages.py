@@ -10,9 +10,9 @@ class Command(BaseCommand):
     help = 'List available virtual age packages.'
 
     def add_arguments(self, parser):
-        parser.add_argument('package_id',
+        parser.add_argument('package_type',
                             type=int,
-                            help='Set package id')
+                            help='Set package type')
 
     def handle(self, *args, **options):
         token = io.StringIO()
@@ -25,7 +25,7 @@ class Command(BaseCommand):
         }
 
         body = {
-            "cdModPac": "{}".format(options['package_id']),
+            "cdModPac": "{}".format(options['package_type']),
             "cdDestino": "91037952000135",
             "dtInclusaoInicio": (timezone.now()).strftime("%d/%m/%Y"),
             "dtInclusaoFim": (timezone.now() + timezone.timedelta(days=1)).strftime("%d/%m/%Y")
