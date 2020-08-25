@@ -1,11 +1,17 @@
+import os
+from uuid import uuid4
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.conf import settings
+from django.db.models.signals import post_save, pre_save, post_delete
+from django.dispatch import receiver
+from django.utils.safestring import mark_safe
 
 
 class Size(models.Model):
     description = models.CharField(
         max_length=4,
         null=False,
-        verbose_name="Tamanho"
     )
 
     def __str__(self):
@@ -13,8 +19,6 @@ class Size(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Grade"
-        verbose_name_plural = "Grades"
 
 
 class Color(models.Model):
@@ -25,13 +29,11 @@ class Color(models.Model):
         auto_created=False,
         max_length=32,
         null=False,
-        verbose_name="Código"
     )
 
     name = models.CharField(
         max_length=32,
         null=False,
-        verbose_name="Nome"
     )
 
     def __str__(self):
@@ -39,8 +41,6 @@ class Color(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Cor"
-        verbose_name_plural = "Cores"
 
 
 class Type(models.Model):
@@ -48,14 +48,11 @@ class Type(models.Model):
         primary_key=True,
         auto_created=False,
         null=False,
-
-        verbose_name="Código"
     )
 
     name = models.CharField(
         max_length=64,
         null=False,
-        verbose_name="Nome"
     )
 
     def __str__(self):
@@ -63,8 +60,6 @@ class Type(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Tipo de Produto"
-        verbose_name_plural = "Tipos de Produtos"
         ordering = ['id']
 
 
@@ -73,14 +68,11 @@ class Season(models.Model):
         primary_key=True,
         auto_created=False,
         null=False,
-
-        verbose_name="Código"
     )
 
     name = models.CharField(
         max_length=64,
         null=False,
-        verbose_name="Nome"
     )
 
     def __str__(self):
@@ -88,8 +80,6 @@ class Season(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Coleção"
-        verbose_name_plural = "Coleções"
         ordering = ['-id']
 
 
@@ -98,14 +88,11 @@ class Brand(models.Model):
         primary_key=True,
         auto_created=False,
         null=False,
-
-        verbose_name="Código"
     )
 
     name = models.CharField(
         max_length=64,
         null=False,
-        verbose_name="Nome"
     )
 
     def __str__(self):
@@ -113,8 +100,6 @@ class Brand(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Marca"
-        verbose_name_plural = "Marcas"
         ordering = ['id']
 
 
@@ -122,7 +107,7 @@ class Group(models.Model):
     id = models.CharField(
         primary_key=True,
         max_length=16,
-        null=False
+        null=False,
     )
 
     def __str__(self):
@@ -130,8 +115,6 @@ class Group(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Grupo"
-        verbose_name_plural = "Grupos"
         ordering = ['-id']
 
 
@@ -147,7 +130,7 @@ class Item(models.Model):
         null=True
     )
 
-    price = models.CharField(max_length=8, null=True)
+    price = models.CharField(max_length=8, null=True, blank=True)
     group = models.ForeignKey(Group, related_name="item_group", on_delete=models.CASCADE)
     type = models.ForeignKey(Type, related_name="item_type", on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
@@ -158,8 +141,6 @@ class Item(models.Model):
 
     class Meta:
         app_label = "item"
-        verbose_name = "Item"
-        verbose_name_plural = "Itens"
         ordering = ['-id']
 
 
@@ -179,17 +160,15 @@ class Sku(models.Model):
         null=False
     )
 
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    size = models.ForeignKey(Size, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, related_name="sku_color", on_delete=models.CASCADE)
+    size = models.ForeignKey(Size, related_name="sku_size", on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, related_name="sku_item", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.id
 
     class Meta:
         app_label = "item"
-        verbose_name = "SKU"
-        verbose_name_plural = "SKUs"
 
 
 class TypePhoto(models.Model):
@@ -201,23 +180,52 @@ class TypePhoto(models.Model):
     class Meta:
         app_label = "item"
         db_table = "item_type_photo"
-        verbose_name = "Tipo de Foto"
-        verbose_name_plural = "Tipos de Fotos"
         ordering = ['id']
 
 
+def upload(instance, filename):
+    return "photos/{0}.{1}".format(uuid4().hex, filename.split('.')[-1])
+
+
 class Photo(models.Model):
+    def image_tag(self):
+        return mark_safe(
+            '<img src="{}/{}" width="150" height="200" />'.format(settings.MEDIA_URL, self.path)) if self.path else ""
+
     group = models.ForeignKey(Group, related_name="photo_group", on_delete=models.CASCADE)
-    type = models.ForeignKey(TypePhoto, on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    path = models.ImageField(upload_to='photos/')
+    type = models.ForeignKey(TypePhoto, related_name="photo_type", on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, related_name="photo_color", on_delete=models.CASCADE)
+    path = models.ImageField(upload_to=upload)
     preview = models.BooleanField()
+    image_tag.short_description = 'Image preview'
 
     def __str__(self):
         return "{} / {} - {}".format(self.group.id, self.color, self.type.name)
 
     class Meta:
         app_label = "item"
-        verbose_name = "Foto"
-        verbose_name_plural = "Fotos"
         ordering = ['-id']
+
+
+@receiver(pre_save, sender=Photo)
+def save_old_photo(sender, instance, **kwargs):
+    try:
+        instance.old_path = (Photo.objects.get(id=instance.id)).path.path
+    except ObjectDoesNotExist:
+        return False
+
+
+@receiver(post_save, sender=Photo)
+def delete_old_photo(sender, instance, **kwargs):
+    if hasattr(instance, 'old_path'):
+        if not instance.old_path == instance.path.path:
+            if os.path.isfile(instance.old_path):
+                os.remove(instance.old_path)
+    return False
+
+
+@receiver(post_delete, sender=Photo)
+def delete_old_photo(sender, instance, **kwargs):
+    if os.path.isfile(instance.path.path):
+        os.remove(instance.path.path)
+    return False
