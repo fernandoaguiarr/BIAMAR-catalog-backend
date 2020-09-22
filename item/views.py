@@ -376,7 +376,7 @@ class SkuViewSet(viewsets.ViewSet):
         # if item id validation fails raise ValueError exception
         try:
             if bool(regex.search(pk)):
-                queryset = queryset.filter(id_item__group=pk)
+                queryset = queryset.filter(item_id__group=pk)
                 serializer = SkuSerializer(queryset, many=True)
                 return Response(status=status.HTTP_200_OK, data=serializer.data)
             else:
