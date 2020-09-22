@@ -86,9 +86,13 @@ class Command(BaseCommand):
                     try:
                         Type.objects.get(id=int(item_type['cdClassificacao']))
                     except ObjectDoesNotExist:
-                        self.logger.info(
-                            "Type {} id {} added".format(item_type["dsClassificacao"], item_type['cdClassificacao']))
-                        Type(id=int(item_type['cdClassificacao']), name=item_type['dsClassificacao']).save()
+
+                        if int(item_type['cdClassificacao']) != 41 and int(item_type['cdClassificacao']) != 29 \
+                                and int(item_type['cdClassificacao']) != 30:
+                            self.logger.info(
+                                "Type {} id {} added".format(item_type["dsClassificacao"],
+                                                             item_type['cdClassificacao']))
+                            Type(id=int(item_type['cdClassificacao']), name=item_type['dsClassificacao']).save()
 
     # Insert sku
     # item is class Item instance
