@@ -10,7 +10,7 @@ from django.utils.safestring import mark_safe
 
 class Size(models.Model):
     description = models.CharField(
-        max_length=4,
+        max_length=16,
         null=False,
     )
 
