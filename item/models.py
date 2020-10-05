@@ -12,7 +12,6 @@ class Size(models.Model):
     description = models.CharField(
         max_length=16,
         null=False,
-        unique=True
     )
 
     def __str__(self):
@@ -131,6 +130,7 @@ class Item(models.Model):
         null=True
     )
 
+    price = models.CharField(max_length=8, null=True, blank=True)
     group = models.ForeignKey(Group, related_name="item_group", on_delete=models.CASCADE)
     type = models.ForeignKey(Type, related_name="item_type", on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
