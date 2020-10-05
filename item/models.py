@@ -12,6 +12,7 @@ class Size(models.Model):
     description = models.CharField(
         max_length=16,
         null=False,
+        unique=True
     )
 
     def __str__(self):
@@ -130,7 +131,6 @@ class Item(models.Model):
         null=True
     )
 
-    price = models.CharField(max_length=8, null=True, blank=True)
     group = models.ForeignKey(Group, related_name="item_group", on_delete=models.CASCADE)
     type = models.ForeignKey(Type, related_name="item_type", on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
@@ -156,10 +156,11 @@ class Sku(models.Model):
     )
 
     weight = models.CharField(
-        max_length=6,
+        max_length=16,
         null=False
     )
 
+    active = models.BooleanField()
     color = models.ForeignKey(Color, related_name="sku_color", on_delete=models.CASCADE)
     size = models.ForeignKey(Size, related_name="sku_size", on_delete=models.CASCADE)
     item = models.ForeignKey(Item, related_name="sku_item", on_delete=models.CASCADE)

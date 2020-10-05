@@ -49,7 +49,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ('id', 'genre', 'price', 'group', 'type', 'brand', 'season')
+        fields = ('id', 'genre', 'group', 'type', 'brand', 'season')
 
 
 class SkuSerializer(serializers.ModelSerializer):
@@ -58,7 +58,7 @@ class SkuSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sku
-        fields = ('id', 'ean', 'weight', 'color', 'size', 'item')
+        fields = ('id', 'ean', 'weight', 'active', 'color', 'size', 'item')
 
 
 class BrandSerializer(serializers.ModelSerializer):
