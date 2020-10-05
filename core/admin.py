@@ -5,7 +5,7 @@ from core.models import VirtualAgeToken, Pdf
 
 @admin.register(VirtualAgeToken)
 class VirtualAgeTokenAdmin(admin.ModelAdmin):
-    fields = ('code', 'date')
+    fieldsets = [(None, {'fields': ('code', 'version', 'date')})]
 
 
 @admin.register(Pdf)
@@ -15,4 +15,3 @@ class PdfAdmin(admin.ModelAdmin):
 
     list_display = ['year', 'name']
     search_fields = ['name', 'year']
-

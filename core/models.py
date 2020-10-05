@@ -24,6 +24,12 @@ class VirtualAgeToken(models.Model):
         blank=False
     )
 
+    version = models.CharField(
+        null=False,
+        blank=False,
+        max_length=8
+    )
+
     date = models.DateTimeField(
         null=False,
         blank=False,
