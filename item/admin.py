@@ -22,7 +22,8 @@ class PhotoInline(admin.TabularInline):
     extra = 1
 
     readonly_fields = ['image_tag']
-    fieldsets = [(None, {'fields': ['type', 'color', 'path', 'image_tag', 'preview']})]
+    ordering = ['type', 'color', 'order']
+    fieldsets = [(None, {'fields': ['type', 'color', 'path', 'order', 'image_tag', 'preview']})]
 
     def get_formset(self, request, obj=None, **kwargs):
         kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)

@@ -191,13 +191,15 @@ def upload(instance, filename):
 class Photo(models.Model):
     def image_tag(self):
         return mark_safe(
-            '<img src="{}/{}" width="150" height="200" />'.format(settings.MEDIA_URL, self.path)) if self.path else ""
+            '<img src="{}/{}" width="100" height="100" />'.format(settings.MEDIA_URL, self.path)) if self.path else ""
 
     group = models.ForeignKey(Group, related_name="photo_group", on_delete=models.CASCADE)
     type = models.ForeignKey(TypePhoto, related_name="photo_type", on_delete=models.CASCADE)
     color = models.ForeignKey(Color, related_name="photo_color", on_delete=models.CASCADE)
     path = models.ImageField(upload_to=upload)
     preview = models.BooleanField()
+    order = models.IntegerField(blank=True, null=True)
+
     image_tag.short_description = 'Image preview'
 
     def __str__(self):
