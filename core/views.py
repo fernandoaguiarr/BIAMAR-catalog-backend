@@ -1,14 +1,12 @@
 import copy
-import json
-import requests
+import io
 
-from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, permissions
+from django.core.management import call_command
 from rest_framework.response import Response
+
 from core.models import VirtualAgeToken
-from django.utils import timezone
-from core.serializers import VirtualAgeTokenSerializer
 
 
 class CustomDjangoModelPermission(permissions.DjangoModelPermissions):
@@ -27,33 +25,12 @@ class VirtualAgeTokenViewSet(viewsets.ViewSet):
     def get_permissions(self):
         return [IsAuthenticated(), CustomDjangoModelPermission()]
 
-    # PhotoModelPermission require this method
+    # CustomDjangoModelPermission require this method
     def get_queryset(self):
         return VirtualAgeToken.objects.all()
 
-    def get_token(self):
-        header = {'Usuario': 'biamarws', 'Senha': '147258', 'Content-Type': 'aplication/json'}
-        response = requests.post('https://www30.bhan.com.br:9443/api/v1/autorizacao/token', headers=header)
-        response = json.loads(response.content)
-        return response['cdToken']
-
     def list(self, request):
-        queryset = self.get_queryset()
-
-        try:
-            if not queryset.exists():
-                raise ObjectDoesNotExist
-            else:
-                queryset = queryset.last()
-                if queryset.date > timezone.now():
-                    serializer = VirtualAgeTokenSerializer(queryset, many=False)
-                    return Response(status=status.HTTP_200_OK, data=serializer.data)
-                else:
-                    raise ObjectDoesNotExist
-
-        except ObjectDoesNotExist:
-            token = VirtualAgeToken(id=self.get_token(), date=(timezone.now() + timezone.timedelta(days=1)))
-            token.save()
-
-            serializer = VirtualAgeTokenSerializer(token, many=False)
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
+        token = io.StringIO()
+        call_command('gettoken', 'v2', stdout=token)
+        token = token.getvalue().replace("\n", "")
+        return Response(data={'code': token})
