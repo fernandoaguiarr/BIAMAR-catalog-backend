@@ -79,10 +79,12 @@ class Command(BaseCommand):
 
             elif version == 'v2':
                 body = {
-                    'grant_type': 'client_credentials',
+                    'grant_type': 'password',
                     'client_id': api['username'],
                     'client_secret': api['password'],
-                    'branch': 1
+                    'username': 'api',
+                    'password': 'api852'
+
                 }
 
                 response = json.loads((requests.post(api['url'], data=body)).content)
