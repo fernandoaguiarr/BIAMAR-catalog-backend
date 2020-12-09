@@ -262,7 +262,7 @@ class GroupViewSet(viewsets.ViewSet):
             if paths[0] is None:
                 paths.pop(0)
 
-            groups_list.append({'id': key, 'paths': paths})
+            groups_list.append({'id': key, 'photos': paths})
 
         return groups_list
 
@@ -277,13 +277,14 @@ class GroupViewSet(viewsets.ViewSet):
 
         # Query Params supported
         list_fields = ['id__icontains', 'item_group__brand__id', 'item_group__season__id',
-                       'item_group__type__id', 'photo_group__preview']
+                       'item_group__type__id', 'photo_group__preview', 'exclude']
 
         queryset = self.get_queryset()
         query_params = request.query_params
 
         filters = {}
         preview = None
+        exclude = None
 
         if query_params:
             for item in query_params:
@@ -294,7 +295,7 @@ class GroupViewSet(viewsets.ViewSet):
 
                     # Convert filters dict values to correct types
                     try:
-                        if 'photo_group__preview' == key:
+                        if 'photo_group__preview' == key or 'exclude' == key:
                             if filters[key].lower() == 'true':
                                 filters[key] = True
                             elif filters[key].lower() == 'false':
@@ -306,6 +307,10 @@ class GroupViewSet(viewsets.ViewSet):
                             preview = {'photo_group__preview': filters['photo_group__preview']}
                             del filters['photo_group__preview']
 
+                        if 'exclude' in filters:
+                            exclude = filters['exclude']
+                            del filters['exclude']
+
                     # Raise ValueError if it was not possible convert
                     except ValueError:
                         return Response(status.HTTP_401_UNAUTHORIZED)
@@ -313,7 +318,13 @@ class GroupViewSet(viewsets.ViewSet):
                 # Raise StopIteration if lambda function return is None
                 except StopIteration:
                     return Response(status.HTTP_401_UNAUTHORIZED)
-            # queryset = queryset.filter(**filters).values('id', 'photo_group__path', 'photo_group__preview')
+
+            if exclude:
+                q1 = Q(photo_group__type=1)
+                q2 = ~Q(photo_group__type=3)
+                q3 = Q(photo_group=None)
+                queryset = queryset.exclude(q1 | q2 | q3).values('id', 'photo_group__path',
+                                                                 'photo_group__preview', 'photo_group__type')
 
             if preview is not None:
                 q1 = Q(**preview)
@@ -329,7 +340,8 @@ class GroupViewSet(viewsets.ViewSet):
 
             return Response(status=status.HTTP_200_OK, data=groups)
         else:
-            serializer = GroupSerializer(queryset.values('id', 'photo_group__path'), many=True)
+            serializer = GroupSerializer(
+                queryset.values('id', 'photo_group__path', 'photo_group__type'), many=True)
             groups = self.group_by(serializer.data)
 
             return Response(status=status.HTTP_200_OK, data=groups)
