@@ -12,6 +12,7 @@ class Size(models.Model):
     description = models.CharField(
         max_length=16,
         null=False,
+        unique=True
     )
 
     def __str__(self):
@@ -198,7 +199,7 @@ class Photo(models.Model):
     color = models.ForeignKey(Color, related_name="photo_color", on_delete=models.CASCADE)
     path = models.ImageField(upload_to=upload)
     preview = models.BooleanField()
-    order = models.IntegerField(blank=True, null=True)
+    order = models.IntegerField(blank=True, null=True, unique=False)
 
     image_tag.short_description = 'Image preview'
 
