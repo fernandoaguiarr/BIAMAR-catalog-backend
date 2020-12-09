@@ -153,7 +153,7 @@ class Command(BaseCommand):
     def __init__(self):
         super().__init__()
 
-        self._pages = 0
+        self._pages = 1
         self._total_items = 0
         self._total_page_items = 0
         self._total_errored_items = 0
