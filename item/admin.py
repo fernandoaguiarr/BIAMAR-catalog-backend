@@ -4,10 +4,10 @@ from django import forms
 from django.contrib import admin
 from django.urls import resolve
 
-from .models import Size, Color, Type, Brand, Season, Photo, Item, Sku, TypePhoto, Group
+from .models import Size, Color, TypeItem, Brand, Season, Photo, Item, Sku, TypePhoto, Group
 
 # Register your models here.
-admin.site.register([Size, Type, Brand, Season, Sku, TypePhoto])
+admin.site.register([Size, TypeItem, Brand, Season, Sku, TypePhoto])
 
 
 class SkuInline(admin.TabularInline):

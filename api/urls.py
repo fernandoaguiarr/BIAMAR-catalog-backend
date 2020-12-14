@@ -7,7 +7,7 @@ from django.urls import path
 
 # local Django
 from api.views import (
-    ItemViewSet, GroupViewSet, PhotoViewSet, SkuViewSet, ItemTypeViewSet, BrandViewSet, SeasonViewSet
+    ItemViewSet, GroupViewSet, PhotoViewSet, SkuViewSet, TypeItemViewSet, BrandViewSet, SeasonViewSet
 )
 
 router = routers.DefaultRouter()
@@ -17,7 +17,7 @@ router.register(r'groups', GroupViewSet, basename="group-viewset")
 router.register(r'photos', PhotoViewSet, basename="photo-viewset")
 router.register(r'brands', BrandViewSet, basename="brand-viewset")
 router.register(r'seasons', SeasonViewSet, basename="season-viewset")
-router.register(r'item-types', ItemTypeViewSet, basename="item-type-viewset")
+router.register(r'type-items', TypeItemViewSet, basename="type-item-viewset")
 
 urlpatterns = [
     path('authentication/', views.obtain_auth_token),
