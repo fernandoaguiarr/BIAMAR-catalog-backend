@@ -1,48 +1,13 @@
+# standard library
 import os
 
-from django.core.exceptions import ObjectDoesNotExist
+# Djanfo
 from django.core.files.storage import FileSystemStorage
 from django.db import models
-
-# Create your models here.
 from django.conf import settings
-from django.db.models.signals import post_save, post_delete, pre_save
+from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.safestring import mark_safe
-from rest_framework.authtoken.models import Token
-
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
-
-
-class VirtualAgeToken(models.Model):
-    code = models.TextField(
-        null=False,
-        blank=False
-    )
-
-    version = models.CharField(
-        null=False,
-        blank=False,
-        max_length=8
-    )
-
-    date = models.DateTimeField(
-        null=False,
-        blank=False,
-    )
-
-    def __str__(self):
-        return "Token {}".format(self.id)
-
-    class Meta:
-        app_label = "core"
-        db_table = "core_token_virtual_age"
-        verbose_name = "Token Virtual Age"
-        verbose_name_plural = "Tokens Virtual Age"
 
 
 def upload(instance, filename):
@@ -70,7 +35,7 @@ class Pdf(models.Model):
         return self.name
 
     class Meta:
-        app_label = "core"
+        app_label = "manager"
         verbose_name = "PDF"
         verbose_name_plural = "PDFs"
 
