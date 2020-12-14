@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.management import BaseCommand
 from django.utils import timezone
-from ...models import VirtualAgeToken as Token
+from api.models import VirtualAgeToken as Token
 
 
 class Command(BaseCommand):
