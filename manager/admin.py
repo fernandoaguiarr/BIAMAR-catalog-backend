@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from core.models import VirtualAgeToken, Pdf
+from manager.models import Pdf
+from api.models import VirtualAgeToken
 
 
 @admin.register(VirtualAgeToken)
