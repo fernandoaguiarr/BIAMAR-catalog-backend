@@ -1,7 +1,13 @@
-from rest_framework.routers import DefaultRouter
+# Django
+from django.contrib import admin
+from django.urls import path, include
 
-from core.views import VirtualAgeTokenViewSet
+admin.site.site_header = "Biamar Malhas Administration"
+admin.site.index_title = "Item Manager"
+admin.site.site_url = None
+admin.site.site_title = "Biamar Malhas"
 
-router = DefaultRouter()
-router.register(r'virtual-age', VirtualAgeTokenViewSet, basename='token_virtual_age')
-urlpatterns = router.urls
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include('api.urls'))
+]
