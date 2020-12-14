@@ -29,8 +29,8 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'item.apps.ItemConfig',
     'core.apps.CoreConfig',
+    'item.apps.ItemConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -80,24 +80,13 @@ WSGI_APPLICATION = 'manager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'biamar_django-admin',
-        'USER': 'django-admin',
-        'PASSWORD': 'elY:O$dfJt6!RB0|T0rX',
-        'HOST': '192.168.3.7',  # Or an IP Address that your DB is hosted on
-        'PORT': '5432'
-    },
-    'item': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'biamar_django-produtos',
-        'USER': 'django-admin',
-        'PASSWORD': 'elY:O$dfJt6!RB0|T0rX',
-        'HOST': '192.168.3.7',  # Or an IP Address that your DB is hosted on
-        'PORT': '5432'
+        'NAME': 'YOUR_DATABASE_NAME',
+        'USER': 'YOUR_DATABASE_USER',
+        'PASSWORD': 'YOUR_DATABASE_USER_PASSWORD',
+        'HOST': 'DATABASE_HOST',  # Or an IP Address that your DB is hosted on
+        'PORT': 'DATABASE_PORT'
     }
 }
-DATABASE_ROUTERS = [
-    'manager.router.MasterRouter',
-]
 
 # Django Rest Framework Configs
 REST_FRAMEWORK = {
@@ -145,4 +134,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Media configs
-MEDIA_URL = '/media_dev/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = 'MEDIA_ABSOLUTE_PATH'
