@@ -10,8 +10,8 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Photo, Item, Brand, Season, Type, TypePhoto, Color, Group, Sku
-from .serializers import PhotoSerializer, ItemSerializer, BrandSerializer, SeasonSerializer, TypeSerializer, \
+from .models import Photo, Item, Brand, Season, TypeItem, TypePhoto, Color, Group, Sku
+from .serializers import PhotoSerializer, ItemSerializer, BrandSerializer, SeasonSerializer, TypeItemSerializer, \
     TypePhotoSerializer, SkuSerializer, GroupSerializer
 
 
@@ -416,13 +416,13 @@ class SeasonViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = SeasonSerializer
 
 
-class TypeViewSet(viewsets.ReadOnlyModelViewSet):
+class TypeItemViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_permissions(self):
         return [IsAuthenticated(), CustomDjangoModelPermission()]
 
-    queryset = Type.objects.all()
-    serializer_class = TypeSerializer
+    queryset = TypeItem.objects.all()
+    serializer_class = TypeItemSerializer
 
 
 class TypePhotoViewSet(viewsets.ReadOnlyModelViewSet):

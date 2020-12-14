@@ -44,7 +44,7 @@ class Color(models.Model):
         app_label = "item"
 
 
-class Type(models.Model):
+class TypeItem(models.Model):
     id = models.IntegerField(
         primary_key=True,
         auto_created=False,
@@ -61,6 +61,7 @@ class Type(models.Model):
 
     class Meta:
         app_label = "item"
+        db_table = "type"
         ordering = ['id']
 
 
@@ -133,7 +134,7 @@ class Item(models.Model):
 
     price = models.CharField(max_length=8, null=True, blank=True)
     group = models.ForeignKey(Group, related_name="item_group", on_delete=models.CASCADE)
-    type = models.ForeignKey(Type, related_name="item_type", on_delete=models.CASCADE)
+    type = models.ForeignKey(TypeItem, related_name="item_type", on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
     season = models.ForeignKey(Season, related_name="season_type", on_delete=models.CASCADE)
 

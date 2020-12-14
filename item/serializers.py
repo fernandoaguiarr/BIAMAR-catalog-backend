@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item, Photo, Brand, Type, Season, TypePhoto, Sku, Group, Color, Size
+from .models import Item, Photo, Brand, TypeItem, Season, TypePhoto, Sku, Group, Color, Size
 
 
 class GenericSerializer(serializers.Serializer):
@@ -67,9 +67,9 @@ class BrandSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class TypeSerializer(serializers.ModelSerializer):
+class TypeItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Type
+        model = TypeItem
         fields = '__all__'
 
 
