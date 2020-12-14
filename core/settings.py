@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'core_old.apps.CoreConfig',
+    'manager.apps.ManagerConfig',
     'item.apps.ItemConfig',
     'api.apps.ApiConfig',
     'django.contrib.admin',
