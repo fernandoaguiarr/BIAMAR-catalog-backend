@@ -413,14 +413,32 @@ class SkuViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
+        query_params = request.query_params
+
+        list_fields = ['item_id__group', 'item_id__brand__id']
+        filters = {}
+
         regex = re.compile("^(0{2}[0-9]{4})")
 
         # if item id validation fails raise ValueError exception
         try:
             if bool(regex.search(pk)):
-                queryset = queryset.filter(item_id__group=pk)
-                serializer = SkuSerializer(queryset, many=True)
-                return Response(status=status.HTTP_200_OK, data=serializer.data)
+                if query_params:
+                    for item in query_params:
+                        key = next(filter(lambda k: item in k, list_fields))
+                        filters = {**filters, **{key: query_params[item]}}
+
+                    filters['item_id__group'] = pk
+                    filters['active'] = True
+
+                    queryset = queryset.filter(**filters)
+                    serializer = SkuSerializer(queryset, many=True)
+                    return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+                else:
+                    queryset = queryset.filter(item_id__group=pk)
+                    serializer = SkuSerializer(queryset, many=True)
+                    return Response(status=status.HTTP_200_OK, data=serializer.data)
             else:
                 raise ValueError
 
