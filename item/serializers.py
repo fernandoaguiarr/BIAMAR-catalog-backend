@@ -31,7 +31,7 @@ class PhotoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Photo
-        fields = ('id', 'group', 'type', 'color', 'path', 'preview', 'order')
+        fields = ('id', 'group', 'type', 'color', 'path', 'preview', 'order', 'export_ecommerce')
 
 
 class GroupSerializer(serializers.ModelSerializer):

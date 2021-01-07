@@ -15,11 +15,18 @@ class Size(models.Model):
         unique=True
     )
 
+    sort = models.IntegerField(
+        null=True,
+        unique=True,
+        default=None
+    )
+
     def __str__(self):
         return self.description
 
     class Meta:
         app_label = "item"
+        ordering = ['sort']
 
 
 class Color(models.Model):
@@ -201,6 +208,7 @@ class Photo(models.Model):
     path = models.ImageField(upload_to=upload)
     preview = models.BooleanField()
     order = models.IntegerField(blank=True, null=True, unique=False)
+    export_ecommerce = models.BooleanField(default=False)
 
     image_tag.short_description = 'Image preview'
 
