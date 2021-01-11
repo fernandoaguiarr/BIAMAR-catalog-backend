@@ -18,7 +18,6 @@ class SkuInline(admin.TabularInline):
 
 class PhotoInline(admin.TabularInline):
     model = Photo
-    max_num = 10
     extra = 1
 
     readonly_fields = ['image_tag']
