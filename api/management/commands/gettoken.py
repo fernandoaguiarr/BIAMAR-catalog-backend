@@ -1,22 +1,20 @@
 import json
 import requests
-from django.core.exceptions import ObjectDoesNotExist
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 from django.utils import timezone
-from api.models import VirtualAgeToken as Token
+
+from ...models import VirtualAgeToken as Token
 
 
 class Command(BaseCommand):
     """
     This Command deals with Totovs Moda TOKEN API
-
     Attributes:
-
     ``help``
         A short description of the command, which will be printed in
         help messages.
-
     ``api``
         A number; Required argument that select the API version, this argument is required because different API
         versions doesn't allow use same tokens.
