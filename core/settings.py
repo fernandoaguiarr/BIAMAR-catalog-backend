@@ -29,7 +29,6 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'manager.apps.ManagerConfig',
     'item.apps.ItemConfig',
     'api.apps.ApiConfig',
     'django.contrib.admin',
