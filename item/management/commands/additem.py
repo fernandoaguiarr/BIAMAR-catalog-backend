@@ -10,7 +10,7 @@ from django.utils.dateparse import parse_date
 from django.db import IntegrityError
 from requests import HTTPError
 
-from item.models import Item, Color, Size, Season, Brand, Type, Group, Sku
+from item.models import Item, Color, Size, Season, Brand, TypeItem, Group, Sku
 
 
 def get_products(start_date, end_date, page_index=0):
@@ -250,7 +250,7 @@ class Command(BaseCommand):
                                          df_columns=season_df.columns)
                             insert_model(klass=Brand, klass_fields=['id', 'name'], df=brand_df,
                                          df_columns=brand_df.columns)
-                            insert_model(klass=Type, klass_fields=['id', 'name'], df=type_df,
+                            insert_model(klass=TypeItem, klass_fields=['id', 'name'], df=type_df,
                                          df_columns=type_df.columns)
                             insert_model(klass=Group, klass_fields=['id'], df=group_df, df_columns=group_df.columns)
 
@@ -261,7 +261,7 @@ class Command(BaseCommand):
                                 'genre': genre_df.iloc[0]['name'] if not genre_df.empty else None,
                                 'season': Season.objects.get(id=season_df.iloc[0]['code']),
                                 'brand': Brand.objects.get(id=brand_df.iloc[0]['code']),
-                                'type': Type.objects.get(id=type_df.iloc[0]['code']),
+                                'type': TypeItem.objects.get(id=type_df.iloc[0]['code']),
                                 'group': Group.objects.get(id=group_df.iloc[0]['code'])
                             }
 

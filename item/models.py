@@ -68,7 +68,7 @@ class TypeItem(models.Model):
 
     class Meta:
         app_label = "item"
-        db_table = "type"
+        db_table = "item_type"
         ordering = ['id']
 
 
