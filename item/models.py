@@ -1,5 +1,6 @@
 import os
 from uuid import uuid4
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.conf import settings
@@ -9,17 +10,8 @@ from django.utils.safestring import mark_safe
 
 
 class Size(models.Model):
-    description = models.CharField(
-        max_length=16,
-        null=False,
-        unique=True
-    )
-
-    sort = models.IntegerField(
-        null=True,
-        unique=True,
-        default=None
-    )
+    description = models.CharField(max_length=16, null=False, unique=True)
+    sort = models.IntegerField(null=True, unique=True, default=None)
 
     def __str__(self):
         return self.description
@@ -32,17 +24,8 @@ class Size(models.Model):
 class Color(models.Model):
     readonly_fields = ('id',)
 
-    id = models.CharField(
-        primary_key=True,
-        auto_created=False,
-        max_length=32,
-        null=False,
-    )
-
-    name = models.CharField(
-        max_length=32,
-        null=False,
-    )
+    id = models.CharField(primary_key=True, auto_created=False, max_length=32, null=False)
+    name = models.CharField(max_length=32, null=False)
 
     def __str__(self):
         return self.name
@@ -52,19 +35,13 @@ class Color(models.Model):
 
 
 class TypeItem(models.Model):
-    id = models.IntegerField(
-        primary_key=True,
-        auto_created=False,
-        null=False,
-    )
+    id = models.IntegerField(primary_key=True, auto_created=False, null=False, unique=True)
+    erp_name = models.CharField(max_length=64, null=False, verbose_name="ERP name")
 
-    name = models.CharField(
-        max_length=64,
-        null=False,
-    )
+    # name = models.CharField(max_length=64, null=True)
 
     def __str__(self):
-        return self.name
+        return self.erp_name
 
     class Meta:
         app_label = "item"
@@ -73,19 +50,13 @@ class TypeItem(models.Model):
 
 
 class Season(models.Model):
-    id = models.IntegerField(
-        primary_key=True,
-        auto_created=False,
-        null=False,
-    )
+    id = models.IntegerField(primary_key=True, auto_created=False, null=False)
+    erp_name = models.CharField(max_length=64, null=False, verbose_name="ERP name")
 
-    name = models.CharField(
-        max_length=64,
-        null=False,
-    )
+    # name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
-        return self.name
+        return self.erp_name
 
     class Meta:
         app_label = "item"
@@ -93,19 +64,13 @@ class Season(models.Model):
 
 
 class Brand(models.Model):
-    id = models.IntegerField(
-        primary_key=True,
-        auto_created=False,
-        null=False,
-    )
+    id = models.IntegerField(primary_key=True, auto_created=False, null=False)
+    erp_name = models.CharField(max_length=64, null=False, verbose_name="ERP name")
 
-    name = models.CharField(
-        max_length=64,
-        null=False,
-    )
+    # name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
-        return self.name
+        return self.erp_name
 
     class Meta:
         app_label = "item"
@@ -154,25 +119,13 @@ class Item(models.Model):
 
 
 class Sku(models.Model):
-    id = models.CharField(
-        primary_key=True,
-        max_length=8,
-    )
-
-    ean = models.CharField(
-        max_length=24,
-        null=True,
-    )
-
-    weight = models.CharField(
-        max_length=16,
-        null=False
-    )
-
-    active = models.BooleanField()
+    id = models.CharField(primary_key=True, max_length=8)
+    ean = models.CharField(max_length=24, null=True)
+    weight = models.CharField(max_length=16, null=False)
     color = models.ForeignKey(Color, related_name="sku_color", on_delete=models.CASCADE)
     size = models.ForeignKey(Size, related_name="sku_size", on_delete=models.CASCADE)
     item = models.ForeignKey(Item, related_name="sku_item", on_delete=models.CASCADE)
+    active = models.BooleanField()
 
     def __str__(self):
         return self.id
@@ -182,7 +135,7 @@ class Sku(models.Model):
 
 
 class TypePhoto(models.Model):
-    name = models.CharField(max_length=32, null=False)
+    name = models.CharField(max_length=32, null=False, unique=True)
 
     def __str__(self):
         return self.name
