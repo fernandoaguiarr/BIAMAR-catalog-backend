@@ -30,6 +30,7 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'item.apps.ItemConfig',
+    'utils.apps.UtilsConfig',
     'api.apps.ApiConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -80,11 +81,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'YOUR_DATABASE_NAME',
-        'USER': 'YOUR_DATABASE_USER',
-        'PASSWORD': 'YOUR_DATABASE_USER_PASSWORD',
-        'HOST': 'DATABASE_HOST',  # Or an IP Address that your DB is hosted on
-        'PORT': 'DATABASE_PORT'
+        'NAME': 'biamar_django-database',
+        'USER': 'django',
+        'PASSWORD': 'django',
+        'HOST': '192.168.0.235',  # Or an IP Address that your DB is hosted on
+        'PORT': '5432'
     }
 }
 
@@ -135,4 +136,4 @@ STATIC_URL = '/static/'
 
 # Media configs
 MEDIA_URL = '/media/'
-MEDIA_ROOT = 'MEDIA_ABSOLUTE_PATH'
+MEDIA_ROOT = 'C:/Users/faguiar/PycharmProjects/photos-3.0.x/photos-backend/media'
