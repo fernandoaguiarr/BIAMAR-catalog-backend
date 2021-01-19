@@ -5,7 +5,8 @@ from rest_framework import serializers
 from api.models import VirtualAgeToken
 
 
-class VirtualAgeTokenSerializer(serializers.ModelSerializer):
+class VirtualAgeSerializer(serializers.Serializer):
+    code = serializers.CharField()
+
     class Meta:
-        model = VirtualAgeToken
-        fields = '__all__'
+        fields = 'code'
