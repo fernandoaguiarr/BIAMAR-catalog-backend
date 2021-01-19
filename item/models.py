@@ -36,9 +36,9 @@ class Color(models.Model):
 
 class TypeItem(models.Model):
     id = models.IntegerField(primary_key=True, auto_created=False, null=False, unique=True)
-    erp_name = models.CharField(max_length=64, null=False, verbose_name="ERP name")
+    erp_name = models.CharField(max_length=64, null=True, verbose_name="ERP name")
 
-    # name = models.CharField(max_length=64, null=True)
+    name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
         return str(self.name)
@@ -51,9 +51,8 @@ class TypeItem(models.Model):
 
 class Season(models.Model):
     id = models.IntegerField(primary_key=True, auto_created=False, null=False)
-    erp_name = models.CharField(max_length=64, null=False, verbose_name="ERP name")
-
-    # name = models.CharField(max_length=64, null=False)
+    erp_name = models.CharField(max_length=64, null=True, verbose_name="ERP name")
+    name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
         return str(self.name)
@@ -65,9 +64,8 @@ class Season(models.Model):
 
 class Brand(models.Model):
     id = models.IntegerField(primary_key=True, auto_created=False, null=False)
-    erp_name = models.CharField(max_length=64, null=False, verbose_name="ERP name")
-
-    # name = models.CharField(max_length=64, null=False)
+    erp_name = models.CharField(max_length=64, null=True, verbose_name="ERP name")
+    name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
         return str(self.name)
