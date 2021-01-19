@@ -14,7 +14,7 @@ class Size(models.Model):
     sort = models.IntegerField(null=True, unique=True, default=None)
 
     def __str__(self):
-        return self.description
+        return str(self.description)
 
     class Meta:
         app_label = "item"
@@ -28,7 +28,7 @@ class Color(models.Model):
     name = models.CharField(max_length=32, null=False)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         app_label = "item"
@@ -41,7 +41,7 @@ class TypeItem(models.Model):
     # name = models.CharField(max_length=64, null=True)
 
     def __str__(self):
-        return self.erp_name
+        return str(self.name)
 
     class Meta:
         app_label = "item"
@@ -56,7 +56,7 @@ class Season(models.Model):
     # name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
-        return self.erp_name
+        return str(self.name)
 
     class Meta:
         app_label = "item"
@@ -70,7 +70,7 @@ class Brand(models.Model):
     # name = models.CharField(max_length=64, null=False)
 
     def __str__(self):
-        return self.erp_name
+        return str(self.name)
 
     class Meta:
         app_label = "item"
@@ -85,7 +85,7 @@ class Group(models.Model):
     )
 
     def __str__(self):
-        return "{}".format(self.id)
+        return str(self.id)
 
     class Meta:
         app_label = "item"
@@ -111,7 +111,7 @@ class Item(models.Model):
     season = models.ForeignKey(Season, related_name="season_type", on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
     class Meta:
         app_label = "item"
@@ -128,7 +128,7 @@ class Sku(models.Model):
     active = models.BooleanField()
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
     class Meta:
         app_label = "item"
@@ -138,7 +138,7 @@ class TypePhoto(models.Model):
     name = models.CharField(max_length=32, null=False, unique=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         app_label = "item"
