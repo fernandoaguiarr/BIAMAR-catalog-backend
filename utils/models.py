@@ -1,13 +1,10 @@
-# standard library
 import os
 
-# Djanfo
 from django.core.files.storage import FileSystemStorage
-from django.db import models
-from django.conf import settings
-from django.db.models.signals import post_delete
-from django.dispatch import receiver
 from django.utils.safestring import mark_safe
+from django.db import models
+
+from core import settings
 
 
 def upload(instance, filename):
@@ -35,15 +32,8 @@ class Pdf(models.Model):
         return self.name
 
     class Meta:
-        app_label = "manager"
+        app_label = "utils"
         verbose_name = "PDF"
         verbose_name_plural = "PDFs"
 
         ordering = ['-year']
-
-
-@receiver(post_delete, sender=Pdf)
-def delete_old_photo(sender, instance, **kwargs):
-    if os.path.isfile(instance.file.path):
-        os.remove(instance.file.path)
-    return False

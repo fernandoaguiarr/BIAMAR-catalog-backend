@@ -2,7 +2,7 @@ import io
 import json
 import requests
 import pandas as pd
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
 from django.core.management import BaseCommand, call_command, CommandError
 from django.utils import timezone, dateformat
@@ -10,7 +10,7 @@ from django.utils.dateparse import parse_date
 from django.db import IntegrityError
 from requests import HTTPError
 
-from item.models import Item, Color, Size, Season, Brand, Type, Group, Sku
+from item.models import Item, Color, Size, Season, Brand, TypeItem, Group, Sku
 
 
 def get_products(start_date, end_date, page_index=0):
@@ -125,26 +125,36 @@ def command_date_is_valid(start=None, end=None):
     return {'start': dateformat.format(start, 'c'), 'end': dateformat.format(end, 'c')}
 
 
-def insert_model(df, df_columns, klass, klass_fields=None):
+def insert_model(df, df_columns, klass, klass_fields=None, additional_fields=None, force_update=True):
     """
     Change the dataframe columns names to klass_fields and convert to the dict.
     After that iter the dict and insert it in the database
 
     :param klass: model class. Only the class reference not instance. Eg.: insert_model(klass=Group,...)
     :param klass_fields: list. A List of the model class fields
+    :param additional_fields:Dict. A Dict with additional fields that will be inserted
+     on the first insertion of the model object
+    :param force_update: Boolean. Value to allow queryset update
     :param df: dataframe. Dataframe with the data that will be inserted in database
     :param df_columns: list. A List of dataframe columns
+
     """
+    if additional_fields is None:
+        additional_fields = {}
     if klass_fields is not None:
         df = df.rename(columns=dict(zip(df_columns, klass_fields)))
 
     for _ in df.to_dict(orient='records'):
-        # In some cases, Size class model for example, the description field is unique and may throw IntegrityError
-        # exception because the description already exist, if this happens pass the insertion
         try:
-            klass(**_).save()
-        except IntegrityError:
-            pass
+            queryset = klass.objects.filter(**_)
+            if not queryset.first():
+                raise ObjectDoesNotExist
+            elif force_update:
+                queryset.update(**_)
+        except ObjectDoesNotExist:
+            # Creating model class instance and saving it to the database
+            # {**_, **aditional_fields} -> joining values
+            klass(**({**_, **additional_fields})).save()
 
 
 class Command(BaseCommand):
@@ -240,18 +250,25 @@ class Command(BaseCommand):
                         if validated_group_df.iloc[0][1]:
                             colors_df = pd.DataFrame(data=item['colors'], columns=['code', 'name'])
                             insert_model(klass=Color, klass_fields=['id', 'name'], df=colors_df,
-                                         df_columns=colors_df.columns)
+                                         df_columns=colors_df.columns, force_update=False)
 
                             sizes_df = pd.DataFrame(data=item['grid'])
                             insert_model(klass=Size, klass_fields=['description'], df=sizes_df,
-                                         df_columns=sizes_df.columns)
+                                         df_columns=sizes_df.columns, force_update=False)
 
-                            insert_model(klass=Season, klass_fields=['id', 'name'], df=season_df,
-                                         df_columns=season_df.columns)
-                            insert_model(klass=Brand, klass_fields=['id', 'name'], df=brand_df,
-                                         df_columns=brand_df.columns)
-                            insert_model(klass=Type, klass_fields=['id', 'name'], df=type_df,
-                                         df_columns=type_df.columns)
+                            insert_model(klass=Season, klass_fields=['id', 'erp_name'],
+                                         additional_fields={'name': season_df.iloc[0]['name']},
+                                         df=season_df,
+                                         df_columns=season_df.columns, force_update=False)
+                            insert_model(klass=Brand, klass_fields=['id', 'erp_name'],
+                                         additional_fields={'name': brand_df.iloc[0]['name']},
+                                         df=brand_df,
+                                         df_columns=brand_df.columns, force_update=False)
+                            insert_model(klass=TypeItem, klass_fields=['id', 'erp_name'],
+                                         additional_fields={'name': type_df.iloc[0]['name']},
+                                         df=type_df,
+                                         df_columns=type_df.columns,
+                                         force_update=False)
                             insert_model(klass=Group, klass_fields=['id'], df=group_df, df_columns=group_df.columns)
 
                             # Create a item_dict with the model classes objects because django requires
@@ -261,7 +278,7 @@ class Command(BaseCommand):
                                 'genre': genre_df.iloc[0]['name'] if not genre_df.empty else None,
                                 'season': Season.objects.get(id=season_df.iloc[0]['code']),
                                 'brand': Brand.objects.get(id=brand_df.iloc[0]['code']),
-                                'type': Type.objects.get(id=type_df.iloc[0]['code']),
+                                'type': TypeItem.objects.get(id=type_df.iloc[0]['code']),
                                 'group': Group.objects.get(id=group_df.iloc[0]['code'])
                             }
 

@@ -1,12 +1,6 @@
 from django.contrib import admin
 
-from manager.models import Pdf
-from api.models import VirtualAgeToken
-
-
-@admin.register(VirtualAgeToken)
-class VirtualAgeTokenAdmin(admin.ModelAdmin):
-    fieldsets = [(None, {'fields': ('code', 'version', 'date')})]
+from utils.models import Pdf
 
 
 @admin.register(Pdf)

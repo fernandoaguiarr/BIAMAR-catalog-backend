@@ -18,12 +18,11 @@ class SkuInline(admin.TabularInline):
 
 class PhotoInline(admin.TabularInline):
     model = Photo
-    max_num = 10
     extra = 1
 
     readonly_fields = ['image_tag']
     ordering = ['type', 'order']
-    fieldsets = [(None, {'fields': ['type', 'color', 'path', 'order', '', 'image_tag', 'preview']})]
+    fieldsets = [(None, {'fields': ['type', 'color', 'path', 'order', 'export_ecommerce', 'preview', 'image_tag']})]
 
     def get_formset(self, request, obj=None, **kwargs):
         kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)

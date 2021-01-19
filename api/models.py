@@ -22,7 +22,7 @@ class VirtualAgeToken(models.Model):
 
     version = models.CharField(
         null=False,
-        blank=False,
+        blank=True,
         max_length=8
     )
 
@@ -35,7 +35,7 @@ class VirtualAgeToken(models.Model):
         return "Token {}".format(self.id)
 
     class Meta:
-        app_label = "manager"
-        db_table = "core_token_virtual_age"
+        app_label = "api"
+        db_table = "api_token_virtual_age"
         verbose_name = "Token Virtual Age"
         verbose_name_plural = "Tokens Virtual Age"
