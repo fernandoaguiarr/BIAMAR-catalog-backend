@@ -119,7 +119,7 @@ class Item(models.Model):
 class Sku(models.Model):
     id = models.CharField(primary_key=True, max_length=8)
     ean = models.CharField(max_length=24, null=True)
-    weight = models.CharField(max_length=16, null=False)
+    weight = models.CharField(max_length=16, null=True)
     color = models.ForeignKey(Color, related_name="sku_color", on_delete=models.CASCADE)
     size = models.ForeignKey(Size, related_name="sku_size", on_delete=models.CASCADE)
     item = models.ForeignKey(Item, related_name="sku_item", on_delete=models.CASCADE)
