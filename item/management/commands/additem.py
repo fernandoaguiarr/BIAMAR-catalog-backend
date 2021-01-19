@@ -257,15 +257,15 @@ class Command(BaseCommand):
                                          df_columns=sizes_df.columns, force_update=False)
 
                             insert_model(klass=Season, klass_fields=['id', 'erp_name'],
-                                         # additional_fields={'name': type_df.iloc[0]['name']},
+                                         additional_fields={'name': season_df.iloc[0]['name']},
                                          df=season_df,
                                          df_columns=season_df.columns, force_update=False)
                             insert_model(klass=Brand, klass_fields=['id', 'erp_name'],
-                                         # additional_fields={'name': type_df.iloc[0]['name']},
+                                         additional_fields={'name': brand_df.iloc[0]['name']},
                                          df=brand_df,
                                          df_columns=brand_df.columns, force_update=False)
                             insert_model(klass=TypeItem, klass_fields=['id', 'erp_name'],
-                                         # additional_fields={'name': type_df.iloc[0]['name']},
+                                         additional_fields={'name': type_df.iloc[0]['name']},
                                          df=type_df,
                                          df_columns=type_df.columns,
                                          force_update=False)
