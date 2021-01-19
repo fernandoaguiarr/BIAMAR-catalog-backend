@@ -1,9 +1,11 @@
 from rest_framework import serializers
-from .models import Item, Photo, Brand, TypeItem, Season, TypePhoto, Sku, Group, Color, Size
+
+from .models import Item, Photo, Sku, Color, Size
 
 
-class GenericSerializer(serializers.Serializer):
+class ItemPropertiesSerializer(serializers.Serializer):
     id = serializers.IntegerField()
+    erp_name = serializers.CharField(allow_null=True)
     name = serializers.CharField()
 
 
@@ -19,67 +21,38 @@ class SizeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class TypePhotoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TypePhoto
-        fields = '__all__'
-
-
 class PhotoSerializer(serializers.ModelSerializer):
-    color = ColorSerializer(many=False, read_only=True)
-    type = TypePhotoSerializer(many=False, read_only=True)
+    color = ColorSerializer()
 
     class Meta:
         model = Photo
-        fields = ('id', 'group', 'type', 'color', 'path', 'preview', 'order', 'export_ecommerce')
+        fields = ['group', 'path', 'preview', 'order', 'export_ecommerce', 'color', 'type']
 
 
-class GroupSerializer(serializers.ModelSerializer):
-    photo_group__path = serializers.CharField()
+class GroupSerializer(serializers.Serializer):
+    group = serializers.CharField()
+    path = serializers.CharField()
+    preview = serializers.BooleanField()
+    photo_type = serializers.CharField()
 
     class Meta:
-        model = Group
-        fields = ('id', 'photo_group__path')
+        fields = ('group', 'path', 'preview', 'photo_type')
 
 
 class ItemSerializer(serializers.ModelSerializer):
-    type = GenericSerializer()
-    brand = GenericSerializer()
-    season = GenericSerializer()
+    brand = ItemPropertiesSerializer()
+    type = ItemPropertiesSerializer()
+    season = ItemPropertiesSerializer()
 
     class Meta:
         model = Item
-        fields = ('id', 'genre', 'price', 'group', 'type', 'brand', 'season')
+        fields = ('id', 'genre', 'group', 'type', 'brand', 'season')
 
 
 class SkuSerializer(serializers.ModelSerializer):
-    color = ColorSerializer(many=False, read_only=True)
-    size = SizeSerializer(many=False, read_only=True)
+    size = SizeSerializer()
+    color = ColorSerializer()
 
     class Meta:
         model = Sku
-        fields = ('id', 'ean', 'weight', 'active', 'color', 'size', 'item')
-
-
-class BrandSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Brand
-        fields = '__all__'
-
-
-class TypeItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TypeItem
-        fields = '__all__'
-
-
-class SeasonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Season
-        fields = '__all__'
-
-
-class TypePhotoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TypePhoto
-        fields = '__all__'
+        fields = ('id', 'ean', 'weight', 'color', 'size', 'item', 'active')
