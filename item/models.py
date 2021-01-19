@@ -4,8 +4,6 @@ from uuid import uuid4
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.conf import settings
-from django.db.models.signals import post_save, pre_save, post_delete
-from django.dispatch import receiver
 from django.utils.safestring import mark_safe
 
 
