@@ -171,27 +171,3 @@ class Photo(models.Model):
     class Meta:
         app_label = "item"
         ordering = ['-id']
-
-
-@receiver(pre_save, sender=Photo)
-def save_old_photo(sender, instance, **kwargs):
-    try:
-        instance.old_path = (Photo.objects.get(id=instance.id)).path.path
-    except ObjectDoesNotExist:
-        return False
-
-
-@receiver(post_save, sender=Photo)
-def delete_old_photo(sender, instance, **kwargs):
-    if hasattr(instance, 'old_path'):
-        if not instance.old_path == instance.path.path:
-            if os.path.isfile(instance.old_path):
-                os.remove(instance.old_path)
-    return False
-
-
-@receiver(post_delete, sender=Photo)
-def delete_old_photo(sender, instance, **kwargs):
-    if os.path.isfile(instance.path.path):
-        os.remove(instance.path.path)
-    return False
