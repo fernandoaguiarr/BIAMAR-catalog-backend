@@ -105,7 +105,7 @@ class GroupViewSet(viewsets.ViewSet):
         if include:
             del query_params['include']
 
-            field_list = ['id__icontains', 'item_group__brand__id', 'item_group__season__id', 'item_group__type__id']
+            field_list = ['id__icontains', 'item_group__brand', 'item_group__season', 'item_group__type']
             filters = serialize_params(query_params, field_list)
 
             queryset = self.get_queryset(include)
@@ -121,9 +121,8 @@ class GroupViewSet(viewsets.ViewSet):
 
         else:
             field_list = [
-                'type', 'color', 'exclude', 'group__id__icontains',
-                'group__item_group__type__id', 'group__item_group__brand__id',
-                'group__item_group__season__id'
+                'group__icontains', 'group__item_group__type', 'group__item_group__brand',
+                'group__item_group__season'
             ]
             filters = serialize_params(query_params, field_list)
 
