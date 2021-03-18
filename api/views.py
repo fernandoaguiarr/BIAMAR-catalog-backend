@@ -112,8 +112,7 @@ class GroupViewSet(viewsets.ViewSet):
                 photo_type=F('photo_group__type')
             ).values('group', 'path', 'preview', 'photo_type')
 
-            serializer = GroupSerializer(queryset, many=True)
-            return Response(status=status.HTTP_200_OK, data=__group_by__(serializer.data))
+            return Response(status=status.HTTP_200_OK, data=__group_by__(queryset))
 
         else:
             field_list = [
@@ -126,9 +125,9 @@ class GroupViewSet(viewsets.ViewSet):
             q = Q(type=1) | Q(type=2)
 
             queryset = queryset.exclude(q).filter(**filters)
-            serializer = PhotoSerializer(queryset, many=True)
 
-            return Response(status=status.HTTP_200_OK, data=__group_by__(serializer.data))
+            return Response(status=status.HTTP_200_OK, data=__group_by__(
+                queryset.values('group', 'path', 'preview', 'order', 'export_ecommerce', 'color', 'type')))
 
 
 class PhotoViewSet(viewsets.ViewSet):
