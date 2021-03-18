@@ -1,20 +1,16 @@
 # standard library
 import io
 import re
-import copy
-from uuid import uuid4
 
 # third-party
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 # Django
 from django.db.models import Q, F
-from django.shortcuts import get_object_or_404
 from django.core.management import call_command
-from django.core.files.storage import FileSystemStorage
-from django.core.exceptions import ObjectDoesNotExist, FieldError, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 
 # local Django
 from api.models import VirtualAgeToken
@@ -24,7 +20,7 @@ from item.models import (
     Photo, Item, Brand, Season, TypeItem, Group, Sku
 )
 from item.serializers import (
-    GroupSerializer, PhotoSerializer, ItemSerializer, SkuSerializer, ItemPropertiesSerializer
+    PhotoSerializer, ItemSerializer, SkuSerializer, ItemPropertiesSerializer
 )
 
 
