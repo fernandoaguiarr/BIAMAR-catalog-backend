@@ -136,4 +136,4 @@ STATIC_URL = '/static/'
 
 # Media configs
 MEDIA_URL = '/media/'
-MEDIA_ROOT = 'C:/Users/faguiar/PycharmProjects/photos-3.0.x/photos-backend/media'
+MEDIA_ROOT = 'YOUR_PATH_TO_MEDIA_FOLDER'
