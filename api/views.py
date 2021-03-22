@@ -1,20 +1,16 @@
 # standard library
 import io
 import re
-import copy
-from uuid import uuid4
 
 # third-party
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 # Django
 from django.db.models import Q, F
-from django.shortcuts import get_object_or_404
 from django.core.management import call_command
-from django.core.files.storage import FileSystemStorage
-from django.core.exceptions import ObjectDoesNotExist, FieldError, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 
 # local Django
 from api.models import VirtualAgeToken
@@ -24,7 +20,7 @@ from item.models import (
     Photo, Item, Brand, Season, TypeItem, Group, Sku
 )
 from item.serializers import (
-    GroupSerializer, PhotoSerializer, ItemSerializer, SkuSerializer, ItemPropertiesSerializer
+    PhotoSerializer, ItemSerializer, SkuSerializer, ItemPropertiesSerializer
 )
 
 
@@ -105,7 +101,7 @@ class GroupViewSet(viewsets.ViewSet):
         if include:
             del query_params['include']
 
-            field_list = ['id__icontains', 'item_group__brand__id', 'item_group__season__id', 'item_group__type__id']
+            field_list = ['id__icontains', 'item_group__brand', 'item_group__season', 'item_group__type']
             filters = serialize_params(query_params, field_list)
 
             queryset = self.get_queryset(include)
@@ -116,14 +112,12 @@ class GroupViewSet(viewsets.ViewSet):
                 photo_type=F('photo_group__type')
             ).values('group', 'path', 'preview', 'photo_type')
 
-            serializer = GroupSerializer(queryset, many=True)
-            return Response(status=status.HTTP_200_OK, data=__group_by__(serializer.data))
+            return Response(status=status.HTTP_200_OK, data=__group_by__(queryset))
 
         else:
             field_list = [
-                'type', 'color', 'exclude', 'group__id__icontains',
-                'group__item_group__type__id', 'group__item_group__brand__id',
-                'group__item_group__season__id'
+                'group__icontains', 'group__item_group__type', 'group__item_group__brand',
+                'group__item_group__season'
             ]
             filters = serialize_params(query_params, field_list)
 
@@ -131,9 +125,9 @@ class GroupViewSet(viewsets.ViewSet):
             q = Q(type=1) | Q(type=2)
 
             queryset = queryset.exclude(q).filter(**filters)
-            serializer = PhotoSerializer(queryset, many=True)
 
-            return Response(status=status.HTTP_200_OK, data=__group_by__(serializer.data))
+            return Response(status=status.HTTP_200_OK, data=__group_by__(
+                queryset.values('group', 'path', 'preview', 'order', 'export_ecommerce', 'color', 'type')))
 
 
 class PhotoViewSet(viewsets.ViewSet):

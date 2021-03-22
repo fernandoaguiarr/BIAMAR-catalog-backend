@@ -39,12 +39,8 @@ def get_products(start_date, end_date, page_index=0):
             'change': {
                 'startDate': start_date,
                 'endDate': end_date,
-                'inProduct': True,
                 'inBranchInfo': True,
-                'branchInfoCodeList': [1],
-                'inPrice': True,
-                'branchPriceCodeList': [1],
-                'priceCodeList': [10],
+                'branchInfoCodeList': [1]
             },
             "classifications": [
                 {

@@ -26,10 +26,11 @@ class Color(models.Model):
     name = models.CharField(max_length=32, null=False)
 
     def __str__(self):
-        return str(self.name)
+        return "{} - {}".format(self.name, self.id)
 
     class Meta:
         app_label = "item"
+        ordering = ['name']
 
 
 class TypeItem(models.Model):
