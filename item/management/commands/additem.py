@@ -16,7 +16,6 @@ from item.models import Item, Color, Size, Season, Brand, TypeItem, Group, Sku
 def get_products(start_date, end_date, page_index=0):
     """
     Request to the API products that has some changed fields in a period.
-
     :param start_date: date. The start date
     :param end_date: date. The limit date
     :param page_index: number;
@@ -72,12 +71,10 @@ def get_products(start_date, end_date, page_index=0):
 def dataframe_column_is_valid(df, column, pattern):
     """
     Run regex full match search in dataframe column.
-
     :param df: Pandas dataframe
     :param column: str. Dataframe column name that will be made regex search
     :param pattern: str. Regex expression. Eg.: r'[0-9]{2} [0-9]{2} (0{2}[0-9]{4})'
     :return: Dataframe with column regex match status
-
     """
     series = pd.Series(data=df[column].values, dtype='string').str.fullmatch(pattern)
 
@@ -92,7 +89,6 @@ def filter_dataframe(data, key, values):
     """
     Transform the dict into a dataframe and filter this dataframe in the column selected returning a dataframe of
     the values provided.
-
     :param data: dict. Data that will be transformed in df and filtered
     :param key: str. The Dataframe column name
     :param values: list. A list of values to be returned
@@ -107,7 +103,6 @@ def command_date_is_valid(start=None, end=None):
     Parse the string to date instances. If the params was not provided set\n
     start date: current date - 1 day
     \nend date :to the current date
-
     :param start: str.The start date
     :param end: str. The limit date
     :return: Dict with these serialized dates
@@ -125,7 +120,6 @@ def insert_model(df, df_columns, klass, klass_fields=None, additional_fields=Non
     """
     Change the dataframe columns names to klass_fields and convert to the dict.
     After that iter the dict and insert it in the database
-
     :param klass: model class. Only the class reference not instance. Eg.: insert_model(klass=Group,...)
     :param klass_fields: list. A List of the model class fields
     :param additional_fields:Dict. A Dict with additional fields that will be inserted
@@ -133,8 +127,8 @@ def insert_model(df, df_columns, klass, klass_fields=None, additional_fields=Non
     :param force_update: Boolean. Value to allow queryset update
     :param df: dataframe. Dataframe with the data that will be inserted in database
     :param df_columns: list. A List of dataframe columns
-
     """
+
     if additional_fields is None:
         additional_fields = {}
     if klass_fields is not None:
@@ -191,7 +185,6 @@ class Command(BaseCommand):
 
             # If the response has been paginated
             next_page = response['hasNext']
-            self._pages += 1
 
             # Transform the response in DF and  after that make a regex search to exclude wrong items codes
             # from the dataframe
@@ -202,7 +195,6 @@ class Command(BaseCommand):
 
             # Convert the dataframe to a dict to be able to iter
             items = df[df['ReferenceCode'].isin(validated_df[0])].to_dict(orient='records')
-
             # Every while loop reset values of _total_page_items, _total_page_treated_items and the insertion statistics
             self._total_page_items = len(items)
             self._total_page_treated_items = 0
@@ -226,11 +218,11 @@ class Command(BaseCommand):
 
                     # Filter classifications_df to get brand, group, season, type and genre in separately dataframes
                     # to make the database insertion more simple and easily
-                    group_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', ['112']))[['code']]
-                    brand_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', ['111']))[['code', 'name']]
-                    season_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', ['7']))[['code', 'name']]
-                    type_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', ['110']))[['code', 'name']]
-                    genre_df = filter_dataframe(classifications_df, 'typeCode', ['1'])[['name']]
+                    group_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [112]))[['code']]
+                    brand_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [111]))[['code', 'name']]
+                    season_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [7]))[['code', 'name']]
+                    type_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [110]))[['code', 'name']]
+                    genre_df = filter_dataframe(classifications_df, 'typeCode', [1])[['name']]
 
                     # Raise IndexError if some of the previous dataframe is empty. If this condicition is True
                     # go to the next item
@@ -326,6 +318,7 @@ class Command(BaseCommand):
                     # Increment _total_errored_items
                     self._total_errored_items += 1
 
+            self._pages += 1
         self._progress_status(last_page=True)
 
     def _progress_status(self, last_page=False):
