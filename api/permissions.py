@@ -34,3 +34,17 @@ class GroupViewSetPermission(permissions.DjangoModelPermissions):
         self.perms_map['PUT'] = []
         self.perms_map['PATCH'] = []
         self.perms_map['DELETE'] = []
+
+
+class ExportPhotosViewSetPermission(permissions.DjangoModelPermissions):
+
+    def __init__(self):
+        self.perms_map = copy.deepcopy(self.perms_map)  # you need deepcopy when you inherit a dictionary type
+        self.perms_map['GET'] = ['%(app_label)s.view_%(model_name)s',
+                                 '%(app_label)s.view_exportsku',
+                                 '%(app_label)s.view_photo'
+                                 ]
+        self.perms_map['POST'] = []
+        self.perms_map['PUT'] = []
+        self.perms_map['PATCH'] = []
+        self.perms_map['DELETE'] = []

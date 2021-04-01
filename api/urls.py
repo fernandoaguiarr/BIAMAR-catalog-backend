@@ -8,7 +8,7 @@ from django.urls import path
 # local Django
 from api.views import (
     GroupViewSet, PhotoViewSet, ItemViewSet, SkuViewSet, ItemTypeViewSet, SeasonViewSet,
-    BrandViewSet, VirtualAgeViewSet
+    BrandViewSet, VirtualAgeViewSet, ExportPhotosViewSet
 )
 
 router = routers.DefaultRouter()
@@ -20,6 +20,7 @@ router.register(r'brands', BrandViewSet, basename="brand-viewset")
 router.register(r'seasons', SeasonViewSet, basename="season-viewset")
 router.register(r'item-types', ItemTypeViewSet, basename="item-types-viewset")
 router.register(r'virtual-age-token', VirtualAgeViewSet, basename="virtual-age-token-viewset")
+router.register(r'export-photos', ExportPhotosViewSet, basename="export-photos-viewset")
 
 urlpatterns = [
     path('authentication/', views.obtain_auth_token),
