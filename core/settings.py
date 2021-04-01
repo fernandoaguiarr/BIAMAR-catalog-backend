@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'item.apps.ItemConfig',
     'utils.apps.UtilsConfig',
     'api.apps.ApiConfig',
+    'vtex.apps.VtexConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
