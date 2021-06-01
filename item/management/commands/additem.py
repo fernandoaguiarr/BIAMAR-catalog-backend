@@ -190,7 +190,7 @@ class Command(BaseCommand):
             # from the dataframe
             df = pd.DataFrame(data=response['items'])
             validated_df = dataframe_column_is_valid(df, 'ReferenceCode',
-                                                     r'[0-9]{2} [0-9]{2} 0{2}[0-9]{4}')
+                                                     r'[0-9]{2} [0-9]{2} ([0-9]{6}|[0-9]{5})')
             validated_df = validated_df.loc[validated_df[1]]
 
             # Convert the dataframe to a dict to be able to iter
@@ -231,7 +231,7 @@ class Command(BaseCommand):
                     else:
                         # Remove possible space characters in group_df value, after that run regex validation
                         group_df['code'] = group_df['code'].str.rstrip()
-                        validated_group_df = dataframe_column_is_valid(group_df, 'code', r'0{2}[0-9]{4}')
+                        validated_group_df = dataframe_column_is_valid(group_df, 'code', r'[0-9]{6}|[0-9]{5}')
 
                         # if the validations fails ValidationError and go to the next item,
                         # otherwise perfom the insertions
