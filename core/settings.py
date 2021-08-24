@@ -91,6 +91,15 @@ DATABASES = {
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+# Cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/var/tmp/django_cache/',
+        'TIMEOUT': 60
+    }
+}
+
 # Django Rest Framework Configs
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
