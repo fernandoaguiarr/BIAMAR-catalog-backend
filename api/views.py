@@ -4,6 +4,7 @@ import json
 import re
 
 # third-party
+import uuid
 
 import pandas as pd
 import numpy as np
@@ -14,7 +15,8 @@ from rest_framework.response import Response
 
 # Django
 from django.db.models import Q, F
-from django.core.management import call_command
+from django.core.cache import cache
+from django.core.management import call_command, CommandError
 from django.core.exceptions import ObjectDoesNotExist
 
 # local Django
@@ -285,114 +287,39 @@ class VirtualAgeViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_200_OK, data=seriazlier.data)
 
 
-# ECOMMERCE VIEWSETS
-
-def vec_add_group_column(value, expr):
-    return re.search(expr, value).group()
-
-
-def vec_group_was_exported(color_column, group_column):
-    try:
-        ExportSku.objects.get(color=color_column, group=group_column)
-        return True
-    except ObjectDoesNotExist:
-        return False
-
-
-def vec_add_photos_column(color_column, group_column, sku_column):
-    photos = Photo.objects.filter(color=color_column, group=group_column, export_ecommerce=True)
-    if photos:
-        try:
-            ExportSku.objects.get(color=color_column, group=group_column)
-        except ObjectDoesNotExist:
-            pass
-        ExportSku(
-            base_sku=Sku.objects.get(id=sku_column),
-            color=Color.objects.get(id=color_column),
-            group=Group.objects.get(id=group_column)
-        ).save()
-        return json.dumps(PhotoSerializer(photos, many=True).data)
-    else:
-        return "None"
-
-
-def required_params(obj, keys):
-    for key in obj:
-        if key not in keys:
-            raise RequiredParam(message="This param is required: {}".format(key))
-
-
 class ExportPhotosViewSet(viewsets.ViewSet):
     def get_permissions(self):
-        return [IsAuthenticated(), ExportPhotosViewSetPermission()]
+        return [
+            IsAuthenticated(), ExportPhotosViewSetPermission()
+        ]
 
     def get_queryset(self):
         return Sku.objects.all()
 
-    @staticmethod
-    def process_df(df):
-        df.loc[:, 'group'] = np.vectorize(vec_add_group_column)(df['item'], r'([0-9]{6}$)')
-        df.loc[:, 'base_sku'] = np.nan
+    @action(detail=False, methods=['POST'], url_path='vtex')
+    def vtex(self, request):
 
-        first_occur_df = df.drop_duplicates(subset=['color', 'group'], keep="first",
-                                            inplace=False).copy()
-        first_occur_df.loc[:, 'group_was_exported'] = np.vectorize(vec_group_was_exported)(
-            first_occur_df['color'],
-            first_occur_df['group']
-        )
-
-        already_exported_df = first_occur_df.loc[first_occur_df['group_was_exported'] == True, :]
-
-        for item in already_exported_df.to_dict(orient="records"):
-            df.loc[
-                (df.group == item['group']) &
-                (df.color == item['color']),
-                'base_sku'
-            ] = item['id']
-
-        first_export_df = first_occur_df.loc[first_occur_df['group_was_exported'] == False].copy()
-        first_export_df.loc[:, 'photos'] = np.vectorize(vec_add_photos_column)(
-            first_export_df['color'],
-            first_export_df['group'],
-            first_export_df['id']
-        )
-
-        first_export_sucess_df = first_export_df.loc[~first_export_df['photos'].str.contains('None')]
-
-        for item in first_export_sucess_df.to_dict(orient="records"):
-            df.loc[
-                (df.group == item['group']) &
-                (df.color == item['color']),
-                'base_sku'
-            ] = item['id']
-
-        add_sku_photos = first_export_sucess_df[['id', 'photos']].to_json(orient="records")
-        copy_sku_photos = df[
-            ~df['base_sku'].isna() &
-            ~df['id'].isin(first_export_sucess_df.id)
-            ].to_json(orient="records")
-
-        error_sku_photos = df[df.isnull().any(axis=1)].to_json(orient="records")
-
-        return {
-            'add': json.loads(add_sku_photos),
-            'copy': json.loads(copy_sku_photos),
-            'error': json.loads(error_sku_photos)
-        }
-
-    @action(detail=False, methods=['post'], url_path="raw-data")
-    def process_raw_data(self, request):
-        required = ['skus']
+        allowed_params = ['value']
         params = request.data.copy()
-        try:
-            if params:
-                required_params(params, required)
-                queryset = self.get_queryset().filter(pk__in=params['skus']).values('id', 'item', 'color')
-                response = self.process_df(pd.DataFrame(data=queryset))
 
-                return Response(status=200, data=response)
-            else:
-                raise RequiredParam("These params are required:{}".format(",".join(required)))
+        try:
+            for param in params:
+                if param not in allowed_params:
+                    raise RequiredParam(message="This param isn't allowed: {}".format(param),
+                                        status=status.HTTP_400_BAD_REQUEST
+                                        )
+
+            cache_id = uuid.uuid4()  # Set a random cache ID
+            cache.set(cache_id, params['value'])  # Save data on a temporary cache
+
+            command_stoud = io.StringIO()  # Initialize StringIO class to be possible to get command stdout
+            call_command('export_photos', cache_id, stdout=command_stoud)
+            data = json.loads(command_stoud.getvalue())
+
+            if isinstance(data, dict):
+                return Response(status=status.HTTP_200_OK, data=data)
+
+            return Response(status=status.HTTP_400_BAD_REQUEST, data=data)
 
         except RequiredParam as exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST, data=exception.message)
+            return Response(data=exception.message, status=exception.status)
