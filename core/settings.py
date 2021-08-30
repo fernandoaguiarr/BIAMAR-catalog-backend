@@ -132,3 +132,13 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = config('EMAIL_PORT')
 DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
 EMAIL_USE_TLS = True
+
+# Cache
+# https://docs.djangoproject.com/en/3.2/topics/cache/
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': config('CACHE_LOCATION')
+    }
+}
