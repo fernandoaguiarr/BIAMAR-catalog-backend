@@ -13,7 +13,7 @@ class Command(BaseCommand):
         super().__init__()
 
         # Set API parameters
-        self.url = 'https://www30.bhan.com.br:9443/api/totvsmoda/authsorization/v2/token/'
+        self.url = 'https://www30.bhan.com.br:9443/api/totvsmoda/authorization/v2/token/'
         self.api_id = 'biamarws'
         self.api_password = '3656878445'
         self.username = 'api'
