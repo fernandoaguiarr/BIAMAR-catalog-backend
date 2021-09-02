@@ -65,8 +65,12 @@ class Color(models.Model):
 class Size(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=32)
-    order = models.IntegerField()
-    ERP_id = models.IntegerField()
+    order = models.IntegerField(null=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['name'], name='unique_size')
+        ]
 
 
 class Group(models.Model):
