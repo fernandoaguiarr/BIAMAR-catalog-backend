@@ -85,7 +85,8 @@ class Group(models.Model):
 
 class Item(models.Model):
     id = models.BigAutoField(primary_key=True)
-    genre = models.CharField(max_length=32)
+    code = models.CharField(max_length=32)
+    gender = models.ForeignKey(to=Gender, on_delete=models.CASCADE)
     category = models.ForeignKey(to=Category, on_delete=models.CASCADE)
     brand = models.ForeignKey(to=Brand, on_delete=models.CASCADE)
     season = models.ForeignKey(to=Season, on_delete=models.CASCADE)
