@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import UniqueConstraint
 
 
 # Create your models here.
@@ -8,12 +9,22 @@ class Brand(models.Model):
     ERP_id = models.IntegerField()
     ERP_name = models.CharField(max_length=32)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_brand')
+        ]
+
 
 class Season(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=32)
     ERP_id = models.IntegerField()
     ERP_name = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_season')
+        ]
 
 
 class Category(models.Model):
@@ -22,12 +33,22 @@ class Category(models.Model):
     ERP_id = models.IntegerField()
     ERP_name = models.CharField(max_length=32)
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_category')
+        ]
+
 
 class Color(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=32)
     ERP_id = models.IntegerField()
     ERP_name = models.CharField(max_length=32)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_color')
+        ]
 
 
 class Size(models.Model):
@@ -41,6 +62,11 @@ class Group(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.IntegerField()
 
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_group')
+        ]
+
 
 class Item(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -49,6 +75,11 @@ class Item(models.Model):
     brand = models.ForeignKey(to=Brand, on_delete=models.CASCADE)
     season = models.ForeignKey(to=Season, on_delete=models.CASCADE)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_item')
+        ]
 
 
 class Sku(models.Model):
@@ -59,3 +90,8 @@ class Sku(models.Model):
     item = models.ForeignKey(to=Item, on_delete=models.CASCADE)
     color = models.ForeignKey(to=Color, on_delete=models.CASCADE)
     size = models.ForeignKey(to=Size, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_sku')
+        ]
