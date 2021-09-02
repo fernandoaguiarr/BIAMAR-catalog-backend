@@ -3,6 +3,17 @@ from django.db.models import UniqueConstraint
 
 
 # Create your models here.
+class Gender(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    ERP_name = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_name'], name='unique_gender')
+        ]
+
+
 class Brand(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=32)
