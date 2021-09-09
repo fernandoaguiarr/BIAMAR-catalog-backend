@@ -102,7 +102,7 @@ class Sku(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.CharField(max_length=32)
     active = models.BooleanField(default=False)
-    weight = models.DecimalField(max_digits=5, decimal_places=2)
+    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)
     item = models.ForeignKey(to=Item, on_delete=models.CASCADE)
     color = models.ForeignKey(to=Color, on_delete=models.CASCADE)
     size = models.ForeignKey(to=Size, on_delete=models.CASCADE)
