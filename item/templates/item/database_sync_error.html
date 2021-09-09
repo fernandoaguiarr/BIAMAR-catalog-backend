@@ -1,0 +1,57 @@
+<table width="70%">
+    <tr>
+        <td>
+            <span style="font-size:48px; font-weight:bold">Olá,</span><br>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <span style="font-size:20px">Durante nossa rotina de importação notamos alguns erros de cadastro que impediram a importação completa de alguns produtos.</span>
+        </td>
+    </tr>
+</table>
+<br><br>
+{% for item in items %}
+{% if item.values %}
+<span style="font-size:22px; font-weight:bold"> {{item.display_name | capfirst}}</span>
+{% if item.description %}<br>
+<div><span>{{item.description}}</span></div>{% endif %}
+<br><br>
+<table style="border:1px solid #CACACA; border-collapse: collapse;">
+    <tr>
+        <td style="font-weight:bold; border-bottom: 1px solid #CACACA; padding:4px 16px">#</td>
+        {% for key in item.values.0.items %}
+        <td style="font-weight:bold; border-bottom: 1px solid #CACACA; padding:4px 16px"> {{key.0 | capfirst}}</td>
+        {% endfor %}
+    </tr>
+    {% for obj in item.values %}
+    <tr>
+        <td style="padding:8px 16px">{{forloop.counter}}</td>
+        {% for key,value in obj.items %}
+        <td style="padding:8px 16px">
+            {% if value %}
+            <span>{{value}}</span>
+            {% else %}
+            <span>{{default_error_text}}</span>
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+<br><br>
+{% endif %}
+{% endfor %}
+<br><br><br>
+<table width="70%">
+    <tr>
+        <td> Você pode visualizar todo o catálogo de produtos em <a href="http://produtos.biamar.com.br"
+                                                                    style="font-weight:bold">produtos.biamar.com.br.</a>
+        </td>
+    </tr>
+    <tr>
+        <td>Este é um e-mail gerado automaticamente pelo <span style="font-weight:bold">Assistente inteligente de integrações</span>,
+            por favor, não responda-o.
+        </td>
+    </tr>
+</table>
