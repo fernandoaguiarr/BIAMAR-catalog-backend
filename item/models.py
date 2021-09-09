@@ -53,7 +53,7 @@ class Category(models.Model):
 class Color(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=32)
-    ERP_id = models.IntegerField()
+    ERP_id = models.CharField(max_length=32)
     ERP_name = models.CharField(max_length=32)
 
     class Meta:
