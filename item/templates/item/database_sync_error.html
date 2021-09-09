@@ -29,7 +29,7 @@
         <td style="padding:8px 16px">{{forloop.counter}}</td>
         {% for key,value in obj.items %}
         <td style="padding:8px 16px">
-            {% if value %}
+            {% if value != 'error' %}
             <span>{{value}}</span>
             {% else %}
             <span>{{default_error_text}}</span>
