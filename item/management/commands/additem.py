@@ -293,11 +293,10 @@ class Command(BaseCommand):
             self.send_email()
 
     def prepare_errors(self):
-        for key, obj in self.errors.items():
-            if obj:
-                self.allow_send_email = self.allow_send_email and True
-                continue
-            self.allow_send_email = self.allow_send_email and False
+        for key, arr in self.errors.items():
+            if arr:
+                self.allow_send_email = True
+                break
 
         self.errors = [
             {'display_name': 'classificações', 'description': None, 'values': self.errors['specs']},
