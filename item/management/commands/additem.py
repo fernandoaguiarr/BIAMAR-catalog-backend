@@ -6,10 +6,11 @@ import requests
 import numpy as np
 import pandas as pd
 
-from django.utils import timezone
+from django.conf import settings
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.utils.dateparse import parse_date
+from django.utils import timezone, dateformat
 from django.template.loader import render_to_string
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
@@ -152,20 +153,21 @@ class Command(BaseCommand):
         self.emails = ['faguiar@biamar.com.br']
         self.allow_send_email = False
 
+        self.dates = [timezone.now() - timezone.timedelta(1), timezone.now()]
+
     def add_arguments(self, parser):
-        parser.add_argument('--start')
-        parser.add_argument('--end')
+        parser.add_argument('--startdate')
+        parser.add_argument('--enddate')
 
     def handle(self, *args, **options):
-        options['start'] = parse_date(options['start']) if options['start'] else timezone.now() - timezone.timedelta(1)
-        options['end'] = parse_date(options['end']) if options['end'] else timezone.now()
-
+        self.date_is_valid([options['startdate'], options['enddate']])
+        print(self.dates)
         condition = True
         index = 1
 
         while condition:
-            data = get_items(options['start'], options['end'], index)
-
+            print(index)
+            data = get_items(self.dates[0], self.dates[1], index)
             df = pd.json_normalize(data['items'], ['colors', 'products', ['classifications']])
             df = df.loc[df.typeCode.isin([1, 7, 110, 111, 112]), ['typeCode', 'code', 'name']]
 
@@ -238,7 +240,6 @@ class Command(BaseCommand):
             items.loc[:, 'category'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 110, 'code')
             items.loc[:, 'error'] = False
             items.loc[~items.ReferenceCode.str.contains(self.item_regex), 'error'] = True
-
             sentence = (
                     ~items.group.str.contains('error') &
                     ~items.brand.str.contains('error') &
@@ -247,6 +248,7 @@ class Command(BaseCommand):
                     ~items.category.str.contains('error') &
                     ~items.error
             )
+
             valid = items.loc[sentence, ['group', 'brand', 'category', 'season', 'gender', 'ReferenceCode']]
             items.loc[sentence, 'error'] = np.vectorize(insert_item, otypes=[bool])(
                 valid.ReferenceCode,
@@ -256,7 +258,8 @@ class Command(BaseCommand):
                 valid.season,
                 valid.gender
             )
-            items.loc[items.error.isnull(), 'error'] = True
+            items.loc[~sentence, 'error'] = True
+
             # Prepare  Skus' values to insert into database
             columns = ['code', 'isActive', 'ReferenceCode', 'colors.code', 'size']
             skus = df.loc[df.ReferenceCode.isin(items.ReferenceCode), columns]
@@ -277,15 +280,8 @@ class Command(BaseCommand):
             errors = errors.rename(columns=dict(zip(errors.columns, columns)))
             self.errors['items'] = [*self.errors['items'], *errors.to_dict('records')]
 
-            #
-            columns = ['id', 'referência']
-            errors = df.loc[
-                (df.ReferenceCode.isin(items.loc[items.error, 'ReferenceCode'])),
-                ['code', 'ReferenceCode']
-            ]
-
             del columns, meta, sentence, df, colors, items, skus
-            condition = False
+            condition = data['hasNext']
             index += 1
 
         self.prepare_errors()
@@ -305,10 +301,23 @@ class Command(BaseCommand):
 
     def send_email(self):
         html = render_to_string('item/database_sync_error.html',
-                                {'default_error_text': 'Sem cadastro', 'items': self.errors}
+                                {'default_error_text': 'Classificação não encontrada', 'items': self.errors}
                                 )
-        send_mail('Incoerências ao importar produtos', from_email='', message='',
+        send_mail('Incoerências ao importar produtos', from_email=settings.DEFAULT_FROM_EMAIL, message='',
                   recipient_list=self.emails,
                   fail_silently=False,
                   html_message=html
                   )
+
+    def date_is_valid(self, dates):
+        try:
+            for index, date in enumerate(dates):
+                if date:
+                    date = date.replace("/", "-")
+                    date = parse_date(date)
+                    self.dates[index] = date
+                else:
+                    self.dates[index] = self.dates[index].replace(hour=0, minute=0, second=0, microsecond=0)
+                self.dates[index] = dateformat.format(self.dates[index], 'c')
+        except ValueError:
+            raise CommandError("input is well formatted but not a valid date.")
