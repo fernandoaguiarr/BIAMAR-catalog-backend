@@ -150,7 +150,7 @@ class Command(BaseCommand):
         self.item_regex = r'(([0-9]{2}\s){2})([0-9]{4,})'
 
         self.emails = ['faguiar@biamar.com.br']
-        self.allow_send_email = True
+        self.allow_send_email = False
 
     def add_arguments(self, parser):
         parser.add_argument('--start')
