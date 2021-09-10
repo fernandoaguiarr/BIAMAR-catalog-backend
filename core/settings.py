@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'item.apps.ItemConfig',
     'utils.apps.UtilsConfig',
+    'image.apps.ImageConfig'
 ]
 
 MIDDLEWARE = [
