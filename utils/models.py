@@ -12,4 +12,6 @@ class MailNotification(models.Model):
     code = models.UUIDField(default=uuid.uuid4())
     name = models.CharField(max_length=32)
     description = models.TextField()
-    users = models.ManyToManyField(User)
+    users = ArrayField(
+        models.CharField(max_length=64)
+    )
