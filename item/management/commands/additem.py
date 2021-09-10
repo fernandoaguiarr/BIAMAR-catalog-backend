@@ -14,8 +14,9 @@ from django.utils import timezone, dateformat
 from django.template.loader import render_to_string
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand, CommandError, call_command
 
+from utils.models import MailNotification
 from item.models import Group, Item, Season, Category, Brand, Color, Size, Gender, Sku
 
 
@@ -150,23 +151,27 @@ class Command(BaseCommand):
         self.group_regex = r'[0-9]{4,}$'
         self.item_regex = r'(([0-9]{2}\s){2})([0-9]{4,})'
 
-        self.emails = ['faguiar@biamar.com.br']
         self.allow_send_email = False
+        self.skip_notification = True
+        self.email_template = 'item/database_sync_error.html'
 
         self.dates = [timezone.now() - timezone.timedelta(1), timezone.now()]
 
     def add_arguments(self, parser):
+        parser.add_argument('--notificationcode')
         parser.add_argument('--startdate')
         parser.add_argument('--enddate')
 
     def handle(self, *args, **options):
         self.date_is_valid([options['startdate'], options['enddate']])
-        print(self.dates)
+
+        if options['notificationcode']:
+            self.skip_notification = False
+
         condition = True
         index = 1
 
         while condition:
-            print(index)
             data = get_items(self.dates[0], self.dates[1], index)
             df = pd.json_normalize(data['items'], ['colors', 'products', ['classifications']])
             df = df.loc[df.typeCode.isin([1, 7, 110, 111, 112]), ['typeCode', 'code', 'name']]
@@ -284,30 +289,14 @@ class Command(BaseCommand):
             condition = data['hasNext']
             index += 1
 
-        self.prepare_errors()
-        if self.allow_send_email:
-            self.send_email()
-
-    def prepare_errors(self):
-        for key, arr in self.errors.items():
-            if arr:
-                self.allow_send_email = True
-                break
-
-        self.errors = [
-            {'display_name': 'classificações', 'description': None, 'values': self.errors['specs']},
-            {'display_name': 'referências', 'description': None, 'values': self.errors['items']},
-        ]
-
-    def send_email(self):
-        html = render_to_string('item/database_sync_error.html',
-                                {'default_error_text': 'Classificação não encontrada', 'items': self.errors}
-                                )
-        send_mail('Incoerências ao importar produtos', from_email=settings.DEFAULT_FROM_EMAIL, message='',
-                  recipient_list=self.emails,
-                  fail_silently=False,
-                  html_message=html
-                  )
+        if not self.skip_notification:
+            self.prepare_errors()
+            if self.allow_send_email:
+                html = render_to_string(
+                    self.email_template,
+                    {'default_error_text': 'Classificação não encontrada', 'items': self.errors}
+                )
+                call_command('sendmail', options['notificationcode'], 'Incoerências ao importar produtos', None, html)
 
     def date_is_valid(self, dates):
         try:
@@ -321,3 +310,14 @@ class Command(BaseCommand):
                 self.dates[index] = dateformat.format(self.dates[index], 'c')
         except ValueError:
             raise CommandError("input is well formatted but not a valid date.")
+
+    def prepare_errors(self):
+        for key, arr in self.errors.items():
+            if arr:
+                self.allow_send_email = True
+                break
+
+        self.errors = [
+            {'display_name': 'classificações', 'description': None, 'values': self.errors['specs']},
+            {'display_name': 'referências', 'description': None, 'values': self.errors['items']},
+        ]
