@@ -19,6 +19,7 @@ class Brand(models.Model):
     name = models.CharField(max_length=32)
     ERP_id = models.IntegerField()
     ERP_name = models.CharField(max_length=32)
+    order = models.IntegerField(null=True, blank=True)
 
     class Meta:
         constraints = [
