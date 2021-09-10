@@ -118,7 +118,7 @@ class ItemAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ['code', 'category', 'brand', 'group', 'season', 'gender']
-    search_fields = ('code', 'group')
+    search_fields = ('code',)
     list_display = ['code', 'category', 'brand']
     list_per_page = _default_list_per_page
     list_filter = ('brand', 'gender')
