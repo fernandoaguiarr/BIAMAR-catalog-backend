@@ -14,6 +14,6 @@ class MailNotificationAdmin(admin.ModelAdmin):
         ('Send to', {'fields': ('users',)})
     )
 
-    filter_horizontal = ('users',)
     readonly_fields = ('code',)
     search_fields = ('code', 'name')
+    list_display = ('name',)
