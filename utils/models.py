@@ -1,9 +1,8 @@
 import uuid
 
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
-
-from django.contrib.auth.models import User
+from django.db.models import UniqueConstraint
+from django.contrib.postgres.fields import ArrayField
 
 
 # Create your models here.
@@ -15,3 +14,8 @@ class MailNotification(models.Model):
     users = ArrayField(
         models.CharField(max_length=64)
     )
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_notification_code')
+        ]
