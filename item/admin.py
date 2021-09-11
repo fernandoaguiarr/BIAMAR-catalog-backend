@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
+from image.admin import PhotoTabularInline
 from item.models import Group, Item, Sku, Size, Color, Category, Season, Brand, Gender
 
 _default_list_per_page = 25
@@ -142,4 +143,4 @@ class GroupAdmin(admin.ModelAdmin):
     search_fields = ('code',)
     list_display = ('code',)
     list_per_page = _default_list_per_page
-    inlines = (ItemTabularInline,)
+    inlines = (ItemTabularInline, PhotoTabularInline)
