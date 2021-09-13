@@ -13,6 +13,9 @@ class Gender(models.Model):
             UniqueConstraint(fields=['ERP_name'], name='unique_gender')
         ]
 
+    def __str__(self):
+        return self.name
+
 
 class Brand(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -26,6 +29,9 @@ class Brand(models.Model):
             UniqueConstraint(fields=['ERP_id'], name='unique_brand')
         ]
 
+    def __str__(self):
+        return self.name
+
 
 class Season(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -37,6 +43,9 @@ class Season(models.Model):
         constraints = [
             UniqueConstraint(fields=['ERP_id'], name='unique_season')
         ]
+
+    def __str__(self):
+        return self.name
 
 
 class Category(models.Model):
@@ -51,6 +60,9 @@ class Category(models.Model):
             UniqueConstraint(fields=['ERP_id'], name='unique_category')
         ]
 
+    def __str__(self):
+        return self.name
+
 
 class Color(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -63,6 +75,9 @@ class Color(models.Model):
             UniqueConstraint(fields=['ERP_id'], name='unique_color')
         ]
 
+    def __str__(self):
+        return "{} - {}".format(self.ERP_id, self.name)
+
 
 class Size(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -74,6 +89,9 @@ class Size(models.Model):
             UniqueConstraint(fields=['name'], name='unique_size')
         ]
 
+    def __str__(self):
+        return self.name
+
 
 class Group(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -83,6 +101,9 @@ class Group(models.Model):
         constraints = [
             UniqueConstraint(fields=['code'], name='unique_group')
         ]
+
+    def __str__(self):
+        return "{}".format(self.code)
 
 
 class Item(models.Model):
@@ -99,6 +120,9 @@ class Item(models.Model):
             UniqueConstraint(fields=['code'], name='unique_item')
         ]
 
+    def __str__(self):
+        return self.code
+
 
 class Sku(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -113,3 +137,6 @@ class Sku(models.Model):
         constraints = [
             UniqueConstraint(fields=['code'], name='unique_sku')
         ]
+
+    def __str__(self):
+        return self.code
