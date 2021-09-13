@@ -3,6 +3,7 @@ from functools import partial
 from django.contrib import admin
 
 # Register your models here.
+from image.forms import PhotoForm
 from item.models import Color
 from image.models import Photo
 
@@ -19,9 +20,6 @@ class PhotoTabularInline(admin.TabularInline):
             formfield.queryset = Color.objects.filter(color_set__item__code__icontains=obj.code).distinct()
         return formfield
 
-    model = Photo
-    fieldsets = (
-        (None, {'fields': ('category', 'color')}),
-        (None, {'fields': ('file',)}),
-    )
     extra = 1
+    model = Photo
+    form = PhotoForm
