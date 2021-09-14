@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'item.apps.ItemConfig',
     'utils.apps.UtilsConfig',
-    'image.apps.ImageConfig'
+    'image.apps.ImageConfig',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
