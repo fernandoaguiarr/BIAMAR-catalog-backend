@@ -1,11 +1,10 @@
 from django.contrib import admin
-from utils.models import MailNotification
+
+from utils.forms import ExportForForm
+from utils.models import MailNotification, ExportFor
 
 
 # Register your models here.
-# admin.site.register(MailNotification)
-
-
 @admin.register(MailNotification)
 class MailNotificationAdmin(admin.ModelAdmin):
     fieldsets = (
@@ -17,3 +16,10 @@ class MailNotificationAdmin(admin.ModelAdmin):
     readonly_fields = ('code',)
     search_fields = ('code', 'name')
     list_display = ('name',)
+
+
+@admin.register(ExportFor)
+class ExportForAdmin(admin.ModelAdmin):
+    search_fields = ('name',)
+    list_display = ('name', 'category')
+    form = ExportForForm
