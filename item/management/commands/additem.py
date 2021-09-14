@@ -170,6 +170,9 @@ class Command(BaseCommand):
 
         while condition:
             data = get_items(self.dates[0], self.dates[1], index)
+            if not data['items']:
+                break
+
             df = pd.json_normalize(data['items'], ['colors', 'products', ['classifications']])
             df = df.loc[df.typeCode.isin([1, 7, 110, 111, 112]), ['typeCode', 'code', 'name']]
 
