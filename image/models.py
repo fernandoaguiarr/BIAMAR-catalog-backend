@@ -1,27 +1,30 @@
 import uuid
 
-from django import forms
-from django.contrib.postgres.fields import ArrayField
-from django.utils.translation import gettext_lazy as _
 from django.db import models
+from django.dispatch import receiver
+from django.db.models import UniqueConstraint
+from django.db.models.signals import pre_save
+
+from utils.models import ExportFor
+from item.models import Group, Color
+from image.constants import constants
+
 
 # Create your models here.
-from item.models import Group, Color
-
-
-class ExportForChoiches(models.TextChoices):
-    VTEX = '1', _('VTEX')
-    PRESTASHOP = '2', _('PrestaShop')
-    CATALOGO = '3', _('Catálogo')
-
-
-def get_export_for_default():
-    return [ExportForChoiches.PRESTASHOP, ExportForChoiches.CATALOGO]
-
-
 class Category(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.name
+
+
+def set_file_path(instance, filename):
+    return '{}{}.{}'.format(
+        constants.UPLOAD_FOLDER,
+        instance.code,
+        filename.split('.')[-1]
+    )
 
 
 class Photo(models.Model):
@@ -30,9 +33,18 @@ class Photo(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    file = models.ImageField(width_field=1332, height_field=1767, max_length=128)
-    export_to = ArrayField(
-        models.CharField(blank=True, null=True, max_length=32),
-        choices=ExportForChoiches.choices,
-        default=get_export_for_default
-    )
+    file = models.ImageField(max_length=128, upload_to=set_file_path)
+    export_to = models.ManyToManyField(ExportFor)
+
+    def __str__(self):
+        return "{} - {}".format(self.group, self.code)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_photo_code')
+        ]
+
+
+@receiver(pre_save, sender=Photo)
+def delete_previous_handler(sender, instance, **kwargs):
+    instance.file.storage.delete(set_file_path(instance, instance.file.name))
