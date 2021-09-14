@@ -1,10 +1,12 @@
 from django import forms
 
-from image.models import Photo
+from utils.models import ExportFor
 
 
 class PhotoForm(forms.ModelForm):
-    class Meta:
-        model = Photo
-        fields = ['category', 'color', 'file', 'export_to']
-        widgets = {'export_to': forms.CheckboxSelectMultiple}
+    export_to = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        choices=ExportFor.objects.filter(category=1).values_list('id', 'name'),
+        show_hidden_initial=True,
+    )
