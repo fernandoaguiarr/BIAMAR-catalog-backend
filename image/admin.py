@@ -2,12 +2,11 @@ from functools import partial
 
 from django.contrib import admin
 
-# Register your models here.
-from image.forms import PhotoForm
 from item.models import Color
-from image.models import Photo
+from image.forms import PhotoForm
+from image.models import Photo, Category
 
-
+# Register your models here.
 class PhotoTabularInline(admin.TabularInline):
     def get_formset(self, request, obj=None, **kwargs):
         kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)
@@ -23,3 +22,10 @@ class PhotoTabularInline(admin.TabularInline):
     extra = 1
     model = Photo
     form = PhotoForm
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('Object Properties', {'fields': ('name',)}),
+    )
