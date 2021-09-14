@@ -19,6 +19,9 @@ class PhotoTabularInline(admin.TabularInline):
             formfield.queryset = Color.objects.filter(color_set__item__code__icontains=obj.code).distinct()
         return formfield
 
+    readonly_fields = ('code',)
+    fields = ('code', 'color', 'category', 'file')
+
     extra = 1
     model = Photo
     form = PhotoForm
