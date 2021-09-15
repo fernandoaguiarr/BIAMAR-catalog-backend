@@ -127,7 +127,7 @@ TEMPLATE_DIRS = (os.path.join(BASE_DIR, 'templates'),)
 
 # Media files
 MEDIA_URL = config('MEDIA_URL')
-MEDIAL_ROOT = os.path.join(config('MEDIA_ROOT'), 'media')
+MEDIA_ROOT = config('MEDIA_ROOT')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
