@@ -110,10 +110,10 @@ class Item(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.CharField(max_length=32)
     gender = models.ForeignKey(to=Gender, on_delete=models.CASCADE)
-    category = models.ForeignKey(to=Category, on_delete=models.CASCADE)
-    brand = models.ForeignKey(to=Brand, on_delete=models.CASCADE)
-    season = models.ForeignKey(to=Season, on_delete=models.CASCADE)
-    group = models.ForeignKey(to=Group, on_delete=models.CASCADE)
+    category = models.ForeignKey(to=Category, on_delete=models.CASCADE, related_name='category_set')
+    brand = models.ForeignKey(to=Brand, on_delete=models.CASCADE, related_name='brand_set')
+    season = models.ForeignKey(to=Season, on_delete=models.CASCADE, related_name='season_set')
+    group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='group_set')
 
     class Meta:
         constraints = [
