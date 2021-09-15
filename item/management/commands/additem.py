@@ -14,6 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.management import BaseCommand, CommandError, call_command
 
+from item.constants import ITEM_REGEX, GROUP_REGEX
 from item.models import Group, Item, Season, Category, Brand, Color, Size, Gender, Sku
 
 
@@ -144,10 +145,6 @@ class Command(BaseCommand):
     def __init__(self):
         super().__init__()
         self.errors = {'specs': [], 'items': [], 'skus': []}
-
-        self.group_regex = r'[0-9]{4,}$'
-        self.item_regex = r'(([0-9]{2}\s){2})([0-9]{4,})'
-
         self.allow_send_email = False
         self.skip_notification = True
         self.email_template = 'item/database_sync_error.html'
@@ -181,7 +178,7 @@ class Command(BaseCommand):
 
             # Prepare group values to insert into database
             df.loc[df.typeCode == 112, 'code'] = df.code.str.replace(r'^00', '', regex=True)
-            df.loc[(df.typeCode == 112) & ~(df.code.str.contains(self.group_regex, regex=True)), 'error'] = True
+            df.loc[(df.typeCode == 112) & ~(df.code.str.contains(GROUP_REGEX, regex=True)), 'error'] = True
             sentence = (df.typeCode == 112) & (df.error.isnull())
             df.loc[sentence, 'error'] = np.vectorize(insert_group, otypes=[bool])(df.loc[sentence, 'code'])
 
@@ -240,12 +237,12 @@ class Command(BaseCommand):
             items.loc[:, 'error'] = False
             items.loc[:, 'group'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 112, 'code')
             items.loc[:, 'group'] = items.group.str.replace(r'^00', '', regex=True)
-            items.loc[~(items.group.str.contains(self.group_regex, regex=True)), 'group'] = 'error'
+            items.loc[~(items.group.str.contains(GROUP_REGEX, regex=True)), 'group'] = 'error'
             items.loc[:, 'gender'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 1, 'name')
             items.loc[:, 'season'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 7, 'code')
             items.loc[:, 'brand'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 111, 'code')
             items.loc[:, 'category'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 110, 'code')
-            items.loc[~items.ReferenceCode.str.contains(self.item_regex), 'error'] = True
+            items.loc[~items.ReferenceCode.str.contains(ITEM_REGEX), 'error'] = True
             sentence = (
                     ~items.group.str.contains('error') &
                     ~items.brand.str.contains('error') &
