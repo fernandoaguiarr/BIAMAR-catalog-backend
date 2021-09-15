@@ -1,39 +1,26 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-
-from django.core.exceptions import ObjectDoesNotExist
 
 from item.models import Group, Color
 from image.models import Photo, Category
+from utils.interfaces import CustomViewSet
 from image.serializers import PhotoSerializer
 
 
 # Create your views here.
-class PhotoViewSet(viewsets.ViewSet):
+class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.filters = {
+        filters = {
             'group': {'klass': Group, 'query_key': 'code'},
             'color': {'klass': Color, 'query_key': 'ERP_id'},
             'category': {'klass': Category, 'query_key': 'id'},
         }
+        super().__init__(filters=filters, **kwargs)
 
     @staticmethod
     def get_queryset():
         return Photo.objects.all()
-
-    def get_filter_object(self, query_params: dict):
-        queryset_filter = {}
-        for obj in query_params.items():
-            if obj[0] in self.filters:
-                try:
-                    query = {self.filters[obj[0]]['query_key']: obj[1]}
-                    queryset_filter[obj[0]] = self.filters[obj[0]]['klass'].objects.get(**query)
-                except ObjectDoesNotExist:
-                    raise NotFound()
-        return queryset_filter
 
     def list(self, request, *args, **kwargs):
         query_params = request.query_params.copy()
