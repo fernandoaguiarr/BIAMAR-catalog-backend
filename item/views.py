@@ -9,12 +9,14 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from item.constants import ITEM_REGEX
 from utils.interfaces import CustomViewSet
+from item.paginations import GroupPagination
 from item.models import Group, Category, Brand, Season, Item, Sku
 from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, CategorySerializer, BrandSerializer, \
     SeasonSerializer
 
 
 class GroupViewSet(viewsets.ViewSet, CustomViewSet):
+
     def __init__(self, **kwargs):
         filters = {
             'category': {'klass': Category, 'query_key': 'id', 'prefix': 'group_set__'},
@@ -25,7 +27,7 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
 
     @staticmethod
     def get_queryset():
-        return Group.objects.all()
+        return Group.objects.all().order_by('-code')
 
     def list(self, request):
         query_params = request.query_params.copy()
@@ -38,9 +40,12 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
             filters = self.get_filter_object(query_params)
             queryset = queryset.annotate(as_char=Cast('code', CharField())).filter(**{**filters, **code})
 
-        serializer = GroupSerializer(queryset, many=True)
+        paginator = GroupPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = GroupSerializer(page, many=True)
+
         if serializer.data:
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
+            return paginator.get_paginated_response(serializer.data)
         raise NotFound()
 
 
