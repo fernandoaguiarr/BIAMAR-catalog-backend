@@ -129,7 +129,7 @@ class Sku(models.Model):
     code = models.CharField(max_length=32)
     active = models.BooleanField(default=False)
     weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)
-    item = models.ForeignKey(to=Item, on_delete=models.CASCADE)
+    item = models.ForeignKey(to=Item, on_delete=models.CASCADE, related_name='item_set')
     color = models.ForeignKey(to=Color, on_delete=models.CASCADE, related_name='color_set')
     size = models.ForeignKey(to=Size, on_delete=models.CASCADE)
 
