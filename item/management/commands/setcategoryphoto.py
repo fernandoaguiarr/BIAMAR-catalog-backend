@@ -4,6 +4,7 @@ from django.core.cache import cache
 from django.core.management import BaseCommand
 
 from image.models import Photo
+from image.serializers import PhotoSerializer
 from item.models import Item, Category
 from item.serializers import CategorySerializer
 
@@ -31,8 +32,10 @@ class Command(BaseCommand):
             obj = category
             group = self.get_object(items, ('category', 'group'), category['id'])
             if group:
-                obj = {**obj, **random.choice(Photo.objects.filter(group=group).values('file'))}
-
+                obj = {
+                    **obj,
+                    **PhotoSerializer(random.choice(Photo.objects.filter(group=group)), many=False).data
+                }
             res.append(CategorySerializer(obj, many=False).data)
 
         cache.set('categories', res, 86400)

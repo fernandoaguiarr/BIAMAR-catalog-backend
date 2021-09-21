@@ -1,5 +1,6 @@
 import re
 
+from django.core.cache import cache
 from django.db.models import CharField
 from django.db.models.functions import Cast
 from rest_framework import viewsets, status
@@ -11,8 +12,7 @@ from item.constants import ITEM_REGEX
 from utils.interfaces import CustomViewSet
 from item.paginations import GroupPagination
 from item.models import Group, Category, Brand, Season, Item, Sku
-from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, CategorySerializer, BrandSerializer, \
-    SeasonSerializer
+from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, BrandSerializer, SeasonSerializer
 
 
 class GroupViewSet(viewsets.ViewSet, CustomViewSet):
@@ -106,8 +106,7 @@ class CategoryViewSet(viewsets.ViewSet):
         return Category.objects.all()
 
     def list(self, request):
-        serializer = CategorySerializer(self.get_queryset(), many=True)
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
+        return Response(status=status.HTTP_200_OK, data=cache.get('categories', []))
 
 
 class BrandViewSet(viewsets.ViewSet):
