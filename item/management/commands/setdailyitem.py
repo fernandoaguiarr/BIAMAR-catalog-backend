@@ -68,11 +68,12 @@ class Command(BaseCommand):
             total = 0
             while condition:
                 data = self.get_item_availability(str(group.code), index)
-                condition = data['hasNext']
                 if data['items']:
                     for obj in data['items']:
                         total += obj['balances'][0]['stock']
 
+                condition = data['hasNext']
+                index += 1
             if total != 0:
                 break
 
