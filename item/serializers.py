@@ -11,6 +11,7 @@ class CategorySerializer(serializers.Serializer):
     id = serializers.IntegerField()
     ERP_id = serializers.IntegerField()
     name = serializers.CharField()
+    url = serializers.CharField(allow_null=True)
 
 
 class BrandSerializer(serializers.Serializer):
