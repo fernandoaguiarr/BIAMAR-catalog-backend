@@ -30,7 +30,7 @@ def set_file_path(instance, filename):
 class Photo(models.Model):
     id = models.BigAutoField(primary_key=True)
     code = models.UUIDField(default=uuid.uuid4)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_has_photos')
     color = models.ForeignKey(Color, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     file = models.ImageField(max_length=128, upload_to=set_file_path)
