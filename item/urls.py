@@ -1,6 +1,6 @@
 from rest_framework import routers
 
-from .views import GroupViewSet, ItemViewSet, SkuViewSet, BrandViewSet, CategoryViewSet, SeasonViewSet
+from .views import GroupViewSet, ItemViewSet, SkuViewSet, BrandViewSet, CategoryViewSet, SeasonViewSet, BannerViewSet
 
 app_name = 'item'
 router = routers.SimpleRouter()
