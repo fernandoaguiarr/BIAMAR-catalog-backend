@@ -66,6 +66,7 @@ class Command(BaseCommand):
         print(group)
         while repeat_queryset_search:
             total = 0
+            condition = True
             while condition:
                 data = self.get_item_availability(str(group.code), index)
                 if data['items']:
