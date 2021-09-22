@@ -54,3 +54,13 @@ class SkuSerializer(serializers.Serializer):
     color = ColorSerializer()
     size = SizeSerializer()
     item = serializers.CharField()
+
+
+class BannerItemSerializer(serializers.Serializer):
+    id = serializers.CharField(source='group')
+    url = serializers.FileField(source='file', use_url=True)
+
+
+class BannerSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    groups = BannerItemSerializer(many=True)
