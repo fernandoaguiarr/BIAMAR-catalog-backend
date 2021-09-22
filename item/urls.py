@@ -10,4 +10,5 @@ router.register(r'skus', SkuViewSet, 'skus')
 router.register(r'brands', BrandViewSet, 'brands')
 router.register(r'categories', CategoryViewSet, 'categories')
 router.register(r'seasons', SeasonViewSet, 'seasons')
+router.register(r'banners', BannerViewSet, 'banners')
 urlpatterns = router.urls

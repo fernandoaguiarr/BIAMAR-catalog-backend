@@ -8,11 +8,13 @@ from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.exceptions import NotFound, ValidationError
 
+from image.models import Photo
 from item.constants import ITEM_REGEX
 from utils.interfaces import CustomViewSet
 from item.paginations import GroupPagination
 from item.models import Group, Category, Brand, Season, Item, Sku
-from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, BrandSerializer, SeasonSerializer
+from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, BrandSerializer, SeasonSerializer, \
+    BannerSerializer
 
 
 class GroupViewSet(viewsets.ViewSet, CustomViewSet):
@@ -127,3 +129,27 @@ class SeasonViewSet(viewsets.ViewSet):
     def list(self, request):
         serializer = SeasonSerializer(self.get_queryset(), many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+class BannerViewSet(viewsets.ViewSet):
+
+    @staticmethod
+    def serialize_banner(items):
+        banner = []
+        for item in items:
+            obj = {
+                'group': Group.objects.get(id=item['id']).code,
+                'file': Photo.objects.get(id=item['photo']).file
+            }
+            banner.append(obj)
+        return banner
+
+    def list(self, request):
+        daily_item = cache.get('dailyitem')
+        print(daily_item)
+        popular_items = {
+            'name': 'os mais visitados',
+            'groups': self.serialize_banner(cache.get('popularitems')[0:4])
+        }
+
+        return Response(BannerSerializer(popular_items, many=False).data)
