@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'item.apps.ItemConfig',
     'utils.apps.UtilsConfig',
     'image.apps.ImageConfig',
-    'rest_framework'
+    'rest_framework',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
