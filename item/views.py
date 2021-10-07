@@ -11,7 +11,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from image.models import Photo
 from item.constants import ITEM_REGEX
 from utils.interfaces import CustomViewSet
-from item.paginations import GroupPagination
+from item.paginations import GroupPagination, SkuPagination
 from item.models import Group, Category, Brand, Season, Item, Sku
 from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, BrandSerializer, SeasonSerializer, \
     BannerSerializer
@@ -93,8 +93,12 @@ class SkuViewSet(viewsets.ViewSet, CustomViewSet):
 
         if query_params:
             queryset = queryset.filter(**self.get_filter_object(query_params))
-            serializer = SkuSerializer(queryset, many=True)
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+            paginator = SkuPagination()
+            page = paginator.paginate_queryset(queryset, request)
+            serializer = SkuSerializer(page, many=True)
+
+            return paginator.get_paginated_response(serializer.data)
         raise ValidationError({'detail': 'Missing ITEM as query param.'})
 
     def retrieve(self, request, pk):

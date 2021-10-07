@@ -134,6 +134,7 @@ class Sku(models.Model):
     size = models.ForeignKey(to=Size, on_delete=models.CASCADE)
 
     class Meta:
+        ordering = ['id']
         constraints = [
             UniqueConstraint(fields=['code'], name='unique_sku')
         ]
