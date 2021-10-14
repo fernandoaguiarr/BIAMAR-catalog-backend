@@ -1,4 +1,8 @@
 import re
+import json
+
+import requests
+import pandas as pd
 
 from django.core.cache import cache
 from django.db.models import CharField
@@ -6,6 +10,7 @@ from django.db.models.functions import Cast
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework.exceptions import NotFound, ValidationError
 
 from image.models import Photo
@@ -56,7 +61,40 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet):
         filters = {
             'group': {'klass': Group, 'query_key': 'code'}
         }
+        self.erp_token = cache.get('ERP_token')
+        self.erp_endpoint = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/prices/search/'
         super().__init__(filters=filters, **kwargs)
+
+    def get_price(self, items, page):
+        headers = {'Authorization': self.erp_token, 'Accept': 'application/json', 'Content-Type': 'application/json'}
+        body = {
+            'filter': {
+                'referenceCodeList': items,
+                'hasPrice': True,
+                'branchPriceCodeList': [1],
+                'priceCodeList': [10]
+            },
+            'option': {
+                'prices': [
+                    {
+                        'branchCode': 1,
+                        'priceCodeList': [10],
+                        'isPromotionalPrice': True
+                    }
+                ]
+            },
+            'page': page,
+            'pageSize': 50
+        }
+        try:
+            response = requests.post(self.erp_endpoint, data=json.dumps(body, cls=DjangoJSONEncoder), headers=headers)
+            if response.status_code == 200:
+                return json.loads(response.content)
+            else:
+                print(response.status_code)
+                raise requests.HTTPError()
+        except requests.HTTPError:
+            return None
 
     @staticmethod
     def get_queryset():
@@ -74,8 +112,51 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet):
 
         if query_params:
             queryset = queryset.filter(**self.get_filter_object(query_params))
-        serializer = ItemSerializer(queryset, many=True)
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
+            items = [item for item in queryset]
+
+            for item in items:
+                code = item.code.split(' ')
+                code[-1] = f'00{code[-1]}' if len(code[-1]) < 5 else code[-1]
+                item.ccode = " ".join(code)
+                item.price = None
+
+            condition = True
+            found_price = 0
+            page = 1
+
+            # TODO: Make some tests using pandas "instead" loops
+            while condition:
+                data = self.get_price([item.ccode for item in items], page)
+                if not data:
+                    break
+
+                df = pd.DataFrame(data=data['items'])
+                if df.empty:
+                    break
+
+                # Be carefully when looping through a queryset, in most cases we have at least 10 registers, so memory
+                # usage will NOT be a problem
+                # https://docs.djangoproject.com/en/dev/ref/models/querysets/#when-querysets-are-evaluated
+                for item in items:
+                    arr = df.loc[df.referenceCode == item.ccode, 'prices']
+                    if not arr.empty and not item.price:
+                        arr = arr.iloc[0]
+                        found_price += 1
+                        item.price = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0]['price']
+                    else:
+                        continue
+
+                condition = data['hasNext']
+                if condition:
+                    page = page + 1
+
+                if found_price == len(items):
+                    break
+
+            serializer = ItemSerializer(queryset, many=True)
+            return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+        raise ValidationError({'detail': 'Missing GROUP as query param.'})
 
 
 class SkuViewSet(viewsets.ViewSet, CustomViewSet):

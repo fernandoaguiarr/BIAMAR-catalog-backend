@@ -42,6 +42,7 @@ class ItemSerializer(serializers.Serializer):
     id = serializers.CharField(source='code')
     group = serializers.CharField()
     gender = serializers.CharField()
+    price = serializers.IntegerField(allow_null=True)
     brand = BrandSerializer()
     category = CategorySerializer()
     season = SeasonSerializer()
