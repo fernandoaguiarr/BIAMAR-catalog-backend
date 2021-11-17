@@ -45,7 +45,7 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
                 code['as_char__contains'] = query_params['code']
                 del query_params['code']
             filters = self.get_filter_object(query_params)
-            queryset = queryset.annotate(as_char=Cast('code', CharField())).filter(**{**filters, **code})
+            queryset = queryset.annotate(as_char=Cast('code', CharField())).filter(**{**filters, **code}).distinct()
 
         paginator = GroupPagination()
         page = paginator.paginate_queryset(queryset, request)
