@@ -34,7 +34,7 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
 
     @staticmethod
     def get_queryset():
-        return Group.objects.all().order_by('-code')
+        return Group.objects.order_by('-code')
 
     def list(self, request):
         query_params = request.query_params.copy()
