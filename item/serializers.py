@@ -18,6 +18,7 @@ class BrandSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     ERP_id = serializers.IntegerField()
     name = serializers.CharField()
+    logo = serializers.CharField()
 
 
 class GenderSerializer(serializers.Serializer):

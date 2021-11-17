@@ -54,7 +54,7 @@ class BrandCategoryAdmin(admin.ModelAdmin):
     fieldsets = [
         ('Internal use', {'fields': ('ERP_id', 'ERP_name')}),
         ('External use', {'fields': ('name',)}),
-        ('Display Properties', {'fields': ('order',)})
+        ('Display Properties', {'fields': ('order', 'logo')})
     ]
 
     readonly_fields = ('ERP_id', 'ERP_name')
