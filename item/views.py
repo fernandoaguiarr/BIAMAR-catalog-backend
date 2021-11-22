@@ -15,7 +15,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from image.models import Photo
 from item.constants import ITEM_REGEX
-from utils.interfaces import CustomViewSet
+from utils.interfaces import CustomViewSet, ERPViewSet
 from item.paginations import GroupPagination, SkuPagination
 from item.models import Group, Category, Brand, Season, Item, Sku
 from item.serializers import GroupSerializer, ItemSerializer, SkuSerializer, BrandSerializer, SeasonSerializer, \
@@ -56,17 +56,16 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
         raise NotFound()
 
 
-class ItemViewSet(viewsets.ViewSet, CustomViewSet):
+class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
     def __init__(self, **kwargs):
         filters = {
             'group': {'klass': Group, 'query_key': 'code'}
         }
-        self.erp_token = cache.get('ERP_token')
-        self.erp_endpoint = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/prices/search/'
-        super().__init__(filters=filters, **kwargs)
+
+        CustomViewSet.__init__(self, filters)
+        ERPViewSet.__init__(self)
 
     def get_price(self, items, page):
-        headers = {'Authorization': self.erp_token, 'Accept': 'application/json', 'Content-Type': 'application/json'}
         body = {
             'filter': {
                 'referenceCodeList': items,
@@ -87,7 +86,8 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet):
             'pageSize': 50
         }
         try:
-            response = requests.post(self.erp_endpoint, data=json.dumps(body, cls=DjangoJSONEncoder), headers=headers)
+            response = requests.post(f'{self.erp_endpoint}prices/search/', data=json.dumps(body, cls=DjangoJSONEncoder),
+                                     headers=self.headers)
             if response.status_code == 200:
                 return json.loads(response.content)
             else:
