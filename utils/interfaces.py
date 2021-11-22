@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from rest_framework.exceptions import NotFound
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -36,3 +37,13 @@ class CustomViewSet:
                 except ObjectDoesNotExist:
                     raise NotFound()
         return queryset_filter
+
+
+class ERPViewSet:
+    def __init__(self):
+        self.erp_endpoint = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/'
+        self.erp_headers = {
+            'Authorization': cache.get('ERP_token'),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
