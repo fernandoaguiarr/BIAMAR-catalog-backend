@@ -56,6 +56,8 @@ class SkuSerializer(serializers.Serializer):
     color = ColorSerializer()
     size = SizeSerializer()
     item = serializers.CharField()
+    location = serializers.ListSerializer(child=serializers.CharField(), allow_empty=True, allow_null=True)
+    available = serializers.IntegerField(allow_null=True)
 
 
 class BannerItemSerializer(serializers.Serializer):
