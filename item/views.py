@@ -101,6 +101,14 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
     def get_queryset():
         return Item.objects.all()
 
+    @staticmethod
+    def append_digit(value):
+        if re.search(r'^(([0-9]{2}\s){2})([0-9]{4})$', value):
+            values = list(value)
+            values[6] = f'00{values[6]}'
+            value = "".join(values)
+        return value
+
     def retrieve(self, request, pk):
         if bool(re.fullmatch(ITEM_REGEX, pk)):
             serializer = ItemSerializer(get_object_or_404(self.get_queryset(), **{'code': pk}))
@@ -113,48 +121,35 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
 
         if query_params:
             queryset = queryset.filter(**self.get_filter_object(query_params))
-            items = [item for item in queryset]
-
-            for item in items:
-                code = item.code.split(' ')
-                code[-1] = f'00{code[-1]}' if len(code[-1]) < 5 else code[-1]
-                item.ccode = " ".join(code)
-                item.price = None
-
-            condition = True
-            found_price = 0
-            page = 1
-
-            # TODO: Make some tests using pandas "instead" loops
-            while condition:
-                data = self.get_price([item.ccode for item in items], page)
-                if not data:
-                    break
-
-                df = pd.DataFrame(data=data['items'])
-                if df.empty:
-                    break
-
-                # Be carefully when looping through a queryset, in most cases we have at least 10 registers, so memory
-                # usage will NOT be a problem
-                # https://docs.djangoproject.com/en/dev/ref/models/querysets/#when-querysets-are-evaluated
-                for item in items:
-                    arr = df.loc[df.referenceCode == item.ccode, 'prices']
-                    if not arr.empty and not item.price:
-                        arr = arr.iloc[0]
-                        found_price += 1
-                        item.price = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0]['price']
-                    else:
-                        continue
-
-                condition = data['hasNext']
-                if condition:
-                    page = page + 1
-
-                if found_price == len(items):
-                    break
-
             serializer = ItemSerializer(queryset, many=True)
+
+            page = 1
+            condition = True
+            not_found = items = [self.append_digit(item['id']) for item in serializer.data]
+
+            while condition:
+                data = self.get_price(items, page)
+                if data:
+                    df = pd.DataFrame(data=data['items'])
+                    if not df.empty:
+                        for obj in serializer.data:
+                            item_id = self.append_digit(obj['id'])
+                            arr = df.loc[df.referenceCode == item_id, 'prices']
+                            if not arr.empty and not obj['price']:
+                                arr = arr.iloc[0]
+                                not_found.pop(not_found.index(item_id))
+                                obj['price'] = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0][
+                                    'price']
+
+                    if not not_found:
+                        break
+
+                    page += 1
+                    condition = data['hasNext']
+
+                else:
+                    break
+
             return Response(status=status.HTTP_200_OK, data=serializer.data)
 
         raise ValidationError({'detail': 'Missing GROUP as query param.'})
