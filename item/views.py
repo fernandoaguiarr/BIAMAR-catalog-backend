@@ -241,8 +241,18 @@ class SkuViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
         raise ValidationError({'detail': 'Missing ITEM as query param.'})
 
     def retrieve(self, request, pk):
-        serializer = ItemSerializer(get_object_or_404(self.get_queryset(), **{'code': pk}))
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
+        serializer = SkuSerializer(get_object_or_404(self.get_queryset(), **{'code': pk}), many=False)
+        data = self.get_inventory([int(serializer.data['id'])], 1)
+        obj_copy = serializer.data
+
+        for obj in data['items']:
+            if int(serializer.data['id']) == obj['productCode']:
+
+                obj_copy = serializer.data
+                obj_copy['available'] = obj['balances'][0]['stock']
+                obj_copy['location'] = [location['locationCode'] for location in obj['locations']]
+                break
+        return Response(status=status.HTTP_200_OK, data=obj_copy)
 
 
 class CategoryViewSet(viewsets.ViewSet):
