@@ -88,7 +88,7 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
         }
         try:
             response = requests.post(f'{self.erp_endpoint}prices/search/', data=json.dumps(body, cls=DjangoJSONEncoder),
-                                     headers=self.headers)
+                                     headers=self.erp_headers)
             if response.status_code == 200:
                 return json.loads(response.content)
             else:
