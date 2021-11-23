@@ -112,7 +112,32 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
     def retrieve(self, request, pk):
         if bool(re.fullmatch(ITEM_REGEX, pk)):
             serializer = ItemSerializer(get_object_or_404(self.get_queryset(), **{'code': pk}))
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
+            obj_copy = serializer.data
+            item_id = self.append_digit(obj_copy['id'])
+
+            page = 1
+            condition = True
+
+            while condition:
+                data = self.get_price([item_id], 1)
+                if data:
+                    df = pd.DataFrame(data=data['items'])
+
+                    if not df.empty:
+                        arr = df.loc[df.referenceCode == item_id, 'prices']
+                        if not arr.empty:
+                            arr = arr.iloc[0]
+                            obj_copy['price'] = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0][
+                                'price']
+                            break
+
+                        page += 1
+                        condition = data['hasNext']
+
+                else:
+                    break
+
+            return Response(status=status.HTTP_200_OK, data=obj_copy)
         NotFound()
 
     def list(self, request):
