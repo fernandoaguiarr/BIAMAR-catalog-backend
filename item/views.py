@@ -3,15 +3,16 @@ import json
 
 import requests
 import pandas as pd
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import NotFound, ValidationError
 
 from django.core.cache import cache
 from django.db.models import CharField
 from django.db.models.functions import Cast
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.generics import get_object_or_404
+from django.utils import dateformat, timezone
 from django.core.serializers.json import DjangoJSONEncoder
-from rest_framework.exceptions import NotFound, ValidationError
 
 from image.models import Photo
 from item.constants import ITEM_REGEX
@@ -159,14 +160,51 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
         raise ValidationError({'detail': 'Missing GROUP as query param.'})
 
 
-class SkuViewSet(viewsets.ViewSet, CustomViewSet):
+class SkuViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
     def __init__(self, **kwargs):
-        filters = {'item': {'klass': Item, 'query_key': 'code', 'suffix': '_id'}}
-        super().__init__(filters=filters, **kwargs)
+        filters = {
+            'item': {'klass': Item, 'query_key': 'code', 'suffix': '_id'}
+        }
+
+        CustomViewSet.__init__(self, filters)
+        ERPViewSet.__init__(self)
 
     @staticmethod
     def get_queryset():
-        return Sku.objects.all()
+        return Sku.objects.filter(active=True)
+
+    def get_inventory(self, skus, page):
+        body = {
+            "filter": {
+                "change": {
+                    "startDate": "2015-08-29T10:48:30.870490+00:00",
+                    "endDate": dateformat.format(timezone.now(), 'c'),
+                    "inStock": True,
+                    "branchStockCodeList": [1],
+                    "stockCodeList": [1]
+                },
+                "productCodeList": skus
+            },
+            "option": {
+                "balances": [
+                    {"branchCode": 1, "stockCodeList": [1], "isTransaction": True}
+                ]
+            },
+            "expand": "locations",
+            "pageSize": 10,
+            "page": page
+        }
+        try:
+            response = requests.post('https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/balances/search',
+                                     data=json.dumps(body, cls=DjangoJSONEncoder),
+                                     headers=self.erp_headers)
+
+            if response.status_code == 200:
+                return json.loads(response.content)
+            else:
+                raise requests.HTTPError()
+        except requests.HTTPError:
+            return None
 
     def list(self, request):
         query_params = request.query_params.copy()
@@ -178,6 +216,26 @@ class SkuViewSet(viewsets.ViewSet, CustomViewSet):
             paginator = SkuPagination()
             page = paginator.paginate_queryset(queryset, request)
             serializer = SkuSerializer(page, many=True)
+
+            page = 1
+            condition = True
+            skus = [int(d['id']) for d in serializer.data]
+
+            while condition:
+                data = self.get_inventory(skus, page)
+                if not data:
+                    break
+
+                for obj in data['items']:
+                    for sku in serializer.data:
+                        if int(sku['id']) == obj['productCode']:
+                            sku.update({
+                                'available': obj['balances'][0]['stock'],
+                                'location': [location['locationCode'] for location in obj['locations']]
+                            })
+                            break
+                page += 1
+                condition = data['hasNext']
 
             return paginator.get_paginated_response(serializer.data)
         raise ValidationError({'detail': 'Missing ITEM as query param.'})
