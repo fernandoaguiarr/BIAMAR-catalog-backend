@@ -1,13 +1,13 @@
 import uuid
 
 from django.db import models
-from django.dispatch import receiver
 from django.db.models import UniqueConstraint
 from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
-from utils.models import ExportFor
+from image import constants
 from item.models import Group, Color
-from image.constants import constants
+from utils.models import ExportFor
 
 
 # Create your models here.
