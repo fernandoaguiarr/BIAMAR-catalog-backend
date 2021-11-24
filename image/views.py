@@ -1,5 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 
 from item.models import Group, Color
 from image.models import Photo, Category
@@ -31,3 +33,24 @@ class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
 
         serializer = PhotoSerializer(queryset, many=True)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+    def create(self, request):
+        required_params = ['group', 'color', 'category', 'file']
+        params = request.data
+
+        missing = [param for param in required_params if param not in params.keys()]
+        if missing:
+            raise ValidationError({'detail': f'missing this params {missing}'})
+
+        for key in [key for key in params.keys() if key not in required_params]:
+            del params[key]
+        params.update()
+        params = {
+            'group': get_object_or_404(Group.objects.all(), **{'code': int(params['group'])}),
+            'color': get_object_or_404(Color.objects.all(), **{'ERP_id': params['color']}),
+            'category': get_object_or_404(Category.objects.all(), **{'id': params['category']}),
+            'file': params['file']
+        }
+
+        Photo(**params).save()
+        return Response(status=status.HTTP_200_OK)
