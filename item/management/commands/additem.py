@@ -127,15 +127,17 @@ def insert_sku(code, active, item, color, size):
 
 def insert_item(code, group, category, brand, season, gender):
     try:
-        Item.objects.update_or_create(
-            code=code,
-            group=Group.objects.get(code=group),
-            category=Category.objects.get(ERP_id=int(category)),
-            brand=Brand.objects.get(ERP_id=brand),
-            season=Season.objects.get(ERP_id=season),
-            gender=Gender.objects.get(ERP_name=gender)
-        )
-        return False
+        if code == f'{category} {brand} {group}':
+            Item.objects.update_or_create(
+                code=code,
+                group=Group.objects.get(code=group),
+                category=Category.objects.get(ERP_id=int(category)),
+                brand=Brand.objects.get(ERP_id=brand),
+                season=Season.objects.get(ERP_id=season),
+                gender=Gender.objects.get(ERP_name=gender)
+            )
+            return False
+        return True
     except ObjectDoesNotExist:
         return True
 
