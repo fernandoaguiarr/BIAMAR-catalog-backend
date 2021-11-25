@@ -23,7 +23,7 @@ def camel_case(value):
 
 
 def get_items(start_date, end_date, index=0):
-    token = cache.get('totvs')
+    token = cache.get('ERP_token')
     url = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/references/search'
     header = {'Authorization': token, 'Accept': 'aplication/json', 'Content-Type': 'application/json'}
     body = {
