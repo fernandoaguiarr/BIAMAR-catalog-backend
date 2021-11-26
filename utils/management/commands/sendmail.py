@@ -20,7 +20,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             notification = MailNotification.objects.get(code=options['notification_code'])
-            params = dict(zip(self._email_params, list(options.values())[8:]))
+            params = dict(zip(
+                self._email_params,
+                [options[param] for param in list(options.keys()) if param in self._email_params]
+            ))
             params['recipient_list'] = notification.users
             params['from_email'] = settings.DEFAULT_FROM_EMAIL
 
