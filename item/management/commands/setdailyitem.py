@@ -24,7 +24,7 @@ class Command(BaseCommand):
         url = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/balances/search/'
 
         start_date = dateformat.format(
-            (timezone.now() - timezone.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0), 'c')
+            (timezone.now()).replace(year=2015, month=1, day=1, hour=0, minute=0, second=0, microsecond=0), 'c')
         end_date = dateformat.format(timezone.now(), 'c')
 
         header = {'Authorization': self.token, 'Accept': 'aplication/json', 'Content-Type': 'application/json'}
@@ -38,7 +38,7 @@ class Command(BaseCommand):
                     "branchStockCodeList": [1],
                     "stockCodeList": [1]
                 },
-                "groupCodeList": [group]
+                "groupCodeList": [group if len(group) > 4 else "00{}".format(group)]
             },
             "option": {"balances": [{"branchCode": 1, "stockCodeList": [1]}]},
             "page": 1
