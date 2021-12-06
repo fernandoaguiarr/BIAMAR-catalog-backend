@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from django.core.cache import cache
+from django.db import IntegrityError
 from django.utils.dateparse import parse_date
 from django.utils import timezone, dateformat
 from django.template.loader import render_to_string
