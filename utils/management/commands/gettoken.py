@@ -21,10 +21,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('endpoint', type=str)
+        parser.add_argument('--force', type=bool)
 
     def handle(self, *args, **options):
-        value = cache.get(options['endpoint'], 'not found')
-        if value != 'not found':
+        value = cache.get(options['endpoint'], None)
+        if value and not options['force']:
             return value
 
         body = {
