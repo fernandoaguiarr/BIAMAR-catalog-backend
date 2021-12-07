@@ -1,10 +1,13 @@
 from functools import partial
 
 from django.contrib import admin
+from django.utils.safestring import mark_safe
+from django.template.loader import render_to_string
 
 from item.models import Color
 from image.forms import PhotoForm
 from image.models import Photo, Category
+
 
 # Register your models here.
 class PhotoTabularInline(admin.TabularInline):
@@ -19,12 +22,21 @@ class PhotoTabularInline(admin.TabularInline):
             formfield.queryset = Color.objects.filter(color_set__item__code__icontains=obj.code).distinct()
         return formfield
 
-    readonly_fields = ('code',)
-    fields = ('code', 'color', 'category', 'file')
+    @mark_safe
+    def open_vtex_view_popup(self, obj):
+        return render_to_string('image/custom_button.html', {'name':''})
+
+    class Media:
+        js = (
+            'image/js/popup.js',
+        )
 
     extra = 1
     model = Photo
     form = PhotoForm
+    open_vtex_view_popup.short_description = 'VTEX'
+    readonly_fields = ('code', 'vtex_upload')
+    fields = ('code', 'color', 'category', 'file', 'export_to', 'open_vtex_view_popup')
 
 
 @admin.register(Category)
