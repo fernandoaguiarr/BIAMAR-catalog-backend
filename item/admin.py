@@ -16,8 +16,6 @@ from image.models import ExportedPhoto, Photo
 from item.constants import DEFAULT_LIST_PER_PAGE
 from item.models import Group, Item, Sku, Size, Color, Category, Season, Brand, Gender
 
-_default_list_per_page = 25
-
 
 @admin.register(Color)
 class ColorAdmin(admin.ModelAdmin):
@@ -29,7 +27,7 @@ class ColorAdmin(admin.ModelAdmin):
     readonly_fields = ('ERP_id', 'ERP_name')
     search_fields = ['name', 'ERP_name', 'ERP_id']
     list_display = ('ERP_id', 'name')
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 @admin.register(Size)
@@ -43,7 +41,7 @@ class SizeAdmin(admin.ModelAdmin):
     search_fields = ['name', 'order']
     list_display = ('name', 'order')
     ordering = ('order',)
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 @admin.register(Category)
@@ -58,7 +56,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'ERP_name', 'ERP_id']
     list_display = ['ERP_id', 'name', 'order']
     ordering = ('order',)
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 @admin.register(Brand)
@@ -73,7 +71,7 @@ class BrandCategoryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'ERP_name', 'ERP_id']
     list_display = ['ERP_id', 'name', 'order']
     ordering = ('order',)
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 @admin.register(Gender)
@@ -86,7 +84,7 @@ class GenderAdmin(admin.ModelAdmin):
     readonly_fields = ('ERP_name',)
     search_fields = ('name', 'ERP_name')
     list_display = ('name',)
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 @admin.register(Season)
@@ -99,7 +97,7 @@ class SeasonAdmin(admin.ModelAdmin):
     readonly_fields = ('ERP_id', 'ERP_name')
     search_fields = ['name', 'ERP_name', 'ERP_id']
     list_display = ('ERP_id', 'name')
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 @admin.register(Sku)
@@ -112,7 +110,7 @@ class SkuAdmin(admin.ModelAdmin):
     readonly_fields = ['code', 'item', 'color', 'size', 'active']
     search_fields = ('code',)
     list_display = ['code', 'item', 'color']
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
 
 
 class SkuTabularInline(admin.TabularInline):
@@ -133,7 +131,7 @@ class ItemAdmin(admin.ModelAdmin):
     readonly_fields = ['code', 'category', 'brand', 'group', 'season', 'gender']
     search_fields = ('code',)
     list_display = ['code', 'category', 'brand']
-    list_per_page = _default_list_per_page
+    list_per_page = DEFAULT_LIST_PER_PAGE
     list_filter = ('brand', 'gender')
     inlines = (SkuTabularInline,)
 
@@ -289,5 +287,8 @@ class GroupAdmin(admin.ModelAdmin):
         js = ('item/js/upload_to_vtex.js',)
 
     list_display = ('code',)
-    list_per_page = _default_list_per_page
+    search_fields = ('code',)
+    readonly_fields = ('code',)
+    list_per_page = DEFAULT_LIST_PER_PAGE
     inlines = (ItemTabularInline, PhotoTabularInline)
+    fieldsets = (('Object properties', {'fields': ('code',)}),)
