@@ -1,13 +1,13 @@
 import uuid
 
 from django.db import models
+from django.dispatch import receiver
 from django.db.models import UniqueConstraint
 from django.db.models.signals import pre_save
-from django.dispatch import receiver
 
 from image import constants
-from item.models import Group, Color
 from utils.models import ExportFor
+from item.models import Group, Color, Sku
 
 
 # Create your models here.
@@ -48,3 +48,12 @@ class Photo(models.Model):
 @receiver(pre_save, sender=Photo)
 def delete_previous_handler(sender, instance, **kwargs):
     instance.file.storage.delete(set_file_path(instance, instance.file.name))
+
+
+class ExportedPhoto(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    code = models.IntegerField()
+    active = models.BooleanField(default=True)
+    sku = models.ForeignKey(to=Sku, on_delete=models.CASCADE)
+    photo = models.ForeignKey(to=Photo, on_delete=models.CASCADE)
+    exportedTo = models.ForeignKey(to=ExportFor, on_delete=models.CASCADE)
