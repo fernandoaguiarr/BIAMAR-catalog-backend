@@ -28,8 +28,9 @@ def get_items(start_date, end_date, index=0):
     url = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/references/search'
     header = {'Authorization': token, 'Accept': 'aplication/json', 'Content-Type': 'application/json'}
     body = {
-        'filter': {
-            'change': {'startDate': start_date, 'endDate': end_date, 'inBranchInfo': True, 'branchInfoCodeList': [1]},
+        "filter": {
+            "change": {"startDate": start_date, "endDate": end_date, "inBranchInfo": True, "branchInfoCodeList": [1]},
+            "branchInfo": {"branchCode": 1, "isActive": True, "isFinishedProduct": True},
             "classifications": [{"type": 33, "codeList": ["1"]}]
         },
         'option': {'branchInfoCode': 1},
