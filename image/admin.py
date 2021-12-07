@@ -35,7 +35,7 @@ class PhotoTabularInline(admin.TabularInline):
     model = Photo
     form = PhotoForm
     open_vtex_view_popup.short_description = 'VTEX'
-    readonly_fields = ('code', 'vtex_upload')
+    readonly_fields = ('code', 'open_vtex_view_popup')
     fields = ('code', 'color', 'category', 'file', 'export_to', 'open_vtex_view_popup')
 
 
