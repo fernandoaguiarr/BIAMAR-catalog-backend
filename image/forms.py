@@ -4,9 +4,8 @@ from utils.models import ExportFor
 
 
 class PhotoForm(forms.ModelForm):
-    export_to = forms.MultipleChoiceField(
+    export_to = forms.ModelMultipleChoiceField(
         required=False,
         widget=forms.CheckboxSelectMultiple,
-        choices=ExportFor.objects.filter(category=1).values_list('id', 'name'),
-        show_hidden_initial=True,
+        queryset=ExportFor.objects.filter(category=1),
     )
