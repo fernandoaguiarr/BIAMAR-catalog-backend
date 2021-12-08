@@ -46,7 +46,7 @@ class Command(BaseCommand):
         ]
 
         for obj in objects:
-            Category.objects.get_or_create(*obj)
+            Category.objects.get_or_create(**obj)
 
     @staticmethod
     def create_root_user():
@@ -66,7 +66,7 @@ class Command(BaseCommand):
         ]
 
         for obj in objects:
-            ExportFor.objects.get_or_create(*obj)
+            ExportFor.objects.get_or_create(**obj)
 
     def handle(self, *args, **options):
         self.create_root_user()
