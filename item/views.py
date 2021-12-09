@@ -31,7 +31,7 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
             'brand': {'klass': Brand, 'query_key': 'id', 'prefix': 'group_set__'},
             'season': {'klass': Season, 'query_key': 'id', 'prefix': 'group_set__'},
         }
-        CustomViewSet.__init__(filters=filters, **kwargs)
+        CustomViewSet.__init__(self, filters=filters)
 
     @staticmethod
     def get_queryset():
