@@ -6,6 +6,7 @@ import pandas as pd
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound, ValidationError
 
 from django.core.cache import cache
@@ -16,6 +17,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from image.models import Photo
 from item.constants import ITEM_REGEX
+from item.permissions import DefaultViewSetPermission
 from utils.interfaces import CustomViewSet, ERPViewSet
 from item.paginations import GroupPagination, SkuPagination
 from item.models import Group, Category, Brand, Season, Item, Sku
@@ -36,6 +38,9 @@ class GroupViewSet(viewsets.ViewSet, CustomViewSet):
     @staticmethod
     def get_queryset():
         return Group.objects.order_by('-code')
+
+    def get_permissions(self):
+        return [IsAuthenticated(), DefaultViewSetPermission()]
 
     def list(self, request):
         query_params = request.query_params.copy()
@@ -65,6 +70,13 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
 
         CustomViewSet.__init__(self, filters)
         ERPViewSet.__init__(self)
+
+    @staticmethod
+    def get_queryset():
+        return Item.objects.all()
+
+    def get_permissions(self):
+        return [IsAuthenticated(), DefaultViewSetPermission()]
 
     def get_price(self, items, page):
         body = {
@@ -98,10 +110,6 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
             return None
 
     @staticmethod
-    def get_queryset():
-        return Item.objects.all()
-
-    @staticmethod
     def append_digit(value):
         if re.search(r'^(([0-9]{2}\s){2})([0-9]{4})$', value):
             values = list(value)
@@ -113,29 +121,30 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
         if bool(re.fullmatch(ITEM_REGEX, pk)):
             serializer = ItemSerializer(get_object_or_404(self.get_queryset(), **{'code': pk}))
             obj_copy = serializer.data
-            item_id = self.append_digit(obj_copy['id'])
 
-            page = 1
-            condition = True
+            if request.user.has_perm('item.get_item_api_price_field'):
+                page = 1
+                condition = True
+                item_id = self.append_digit(obj_copy['id'])
 
-            while condition:
-                data = self.get_price([item_id], 1)
-                if data:
-                    df = pd.DataFrame(data=data['items'])
+                while condition:
+                    data = self.get_price([item_id], 1)
+                    if data:
+                        df = pd.DataFrame(data=data['items'])
 
-                    if not df.empty:
-                        arr = df.loc[df.referenceCode == item_id, 'prices']
-                        if not arr.empty:
-                            arr = arr.iloc[0]
-                            obj_copy['price'] = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0][
-                                'price']
-                            break
+                        if not df.empty:
+                            arr = df.loc[df.referenceCode == item_id, 'prices']
+                            if not arr.empty:
+                                arr = arr.iloc[0]
+                                obj_copy['price'] = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else \
+                                    arr[0]['price']
+                                break
 
-                        page += 1
-                        condition = data['hasNext']
+                            page += 1
+                            condition = data['hasNext']
 
-                else:
-                    break
+                    else:
+                        break
 
             return Response(status=status.HTTP_200_OK, data=obj_copy)
         NotFound()
@@ -148,32 +157,33 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
             queryset = queryset.filter(**self.get_filter_object(query_params))
             serializer = ItemSerializer(queryset, many=True)
 
-            page = 1
-            condition = True
-            not_found = items = [self.append_digit(item['id']) for item in serializer.data]
+            if request.user.has_perm('item.get_item_api_price_field'):
+                page = 1
+                condition = True
+                not_found = items = [self.append_digit(item['id']) for item in serializer.data]
 
-            while condition:
-                data = self.get_price(items, page)
-                if data:
-                    df = pd.DataFrame(data=data['items'])
-                    if not df.empty:
-                        for obj in serializer.data:
-                            item_id = self.append_digit(obj['id'])
-                            arr = df.loc[df.referenceCode == item_id, 'prices']
-                            if not arr.empty and not obj['price']:
-                                arr = arr.iloc[0]
-                                not_found.pop(not_found.index(item_id))
-                                obj['price'] = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0][
-                                    'price']
+                while condition:
+                    data = self.get_price(items, page)
+                    if data:
+                        df = pd.DataFrame(data=data['items'])
+                        if not df.empty:
+                            for obj in serializer.data:
+                                item_id = self.append_digit(obj['id'])
+                                arr = df.loc[df.referenceCode == item_id, 'prices']
+                                if not arr.empty and not obj['price']:
+                                    arr = arr.iloc[0]
+                                    not_found.pop(not_found.index(item_id))
+                                    obj['price'] = arr[0]['promotionalPrice'] if arr[0]['promotionalPrice'] else arr[0][
+                                        'price']
 
-                    if not not_found:
+                        if not not_found:
+                            break
+
+                        page += 1
+                        condition = data['hasNext']
+
+                    else:
                         break
-
-                    page += 1
-                    condition = data['hasNext']
-
-                else:
-                    break
 
             return Response(status=status.HTTP_200_OK, data=serializer.data)
 
@@ -192,6 +202,9 @@ class SkuViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
     @staticmethod
     def get_queryset():
         return Sku.objects.filter(active=True)
+
+    def get_permissions(self):
+        return [IsAuthenticated(), DefaultViewSetPermission()]
 
     def get_inventory(self, skus, page):
         body = {
@@ -237,41 +250,43 @@ class SkuViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
             page = paginator.paginate_queryset(queryset, request)
             serializer = SkuSerializer(page, many=True)
 
-            page = 1
-            condition = True
-            skus = [int(d['id']) for d in serializer.data]
+            if request.user.has_perm('item.get_sku_api_availability_field'):
+                page = 1
+                condition = True
+                skus = [int(d['id']) for d in serializer.data]
 
-            while condition:
-                data = self.get_inventory(skus, page)
-                if not data:
-                    break
+                while condition:
+                    data = self.get_inventory(skus, page)
+                    if not data:
+                        break
 
-                for obj in data['items']:
-                    for sku in serializer.data:
-                        if int(sku['id']) == obj['productCode']:
-                            sku.update({
-                                'available': obj['balances'][0]['stock'],
-                                'location': [location['locationCode'] for location in obj['locations']]
-                            })
-                            break
-                page += 1
-                condition = data['hasNext']
+                    for obj in data['items']:
+                        for sku in serializer.data:
+                            if int(sku['id']) == obj['productCode']:
+                                sku.update({
+                                    'available': obj['balances'][0]['stock'],
+                                    'location': [location['locationCode'] for location in obj['locations']]
+                                })
+                                break
+                    page += 1
+                    condition = data['hasNext']
 
             return paginator.get_paginated_response(serializer.data)
         raise ValidationError({'detail': 'Missing ITEM as query param.'})
 
     def retrieve(self, request, pk):
         serializer = SkuSerializer(get_object_or_404(self.get_queryset(), **{'code': pk}), many=False)
-        data = self.get_inventory([int(serializer.data['id'])], 1)
         obj_copy = serializer.data
 
-        for obj in data['items']:
-            if int(serializer.data['id']) == obj['productCode']:
+        if request.user.has_perm('item.get_sku_api_availability_field'):
+            data = self.get_inventory([int(serializer.data['id'])], 1)
 
-                obj_copy = serializer.data
-                obj_copy['available'] = obj['balances'][0]['stock']
-                obj_copy['location'] = [location['locationCode'] for location in obj['locations']]
-                break
+            for obj in data['items']:
+                if int(serializer.data['id']) == obj['productCode']:
+                    obj_copy = serializer.data
+                    obj_copy['available'] = obj['balances'][0]['stock']
+                    obj_copy['location'] = [location['locationCode'] for location in obj['locations']]
+                    break
         return Response(status=status.HTTP_200_OK, data=obj_copy)
 
 
