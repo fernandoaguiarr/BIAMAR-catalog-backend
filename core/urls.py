@@ -18,8 +18,8 @@ from django.urls import path, include
 from utils.views import ERPToken
 
 urlpatterns = [
-                  path('admin/', admin.site.urls),
-                  path('api/', include('item.urls')),
-                  path('api/', include('image.urls')),
-                  path('erp-token/', ERPToken.as_view({'get': 'list'}), name='ERP-name')
-              ]
+    path('admin/', admin.site.urls),
+    path('', include('item.urls')),
+    path('', include('image.urls')),
+    path('authorization/', views.obtain_auth_token),
+]
