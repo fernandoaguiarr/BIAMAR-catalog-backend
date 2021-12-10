@@ -9,7 +9,6 @@ from image.forms import PhotoForm
 from image.models import Photo, Category
 
 
-# Register your models here.
 class PhotoTabularInline(admin.TabularInline):
     def get_formset(self, request, obj=None, **kwargs):
         kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)
@@ -24,7 +23,7 @@ class PhotoTabularInline(admin.TabularInline):
 
     @mark_safe
     def open_vtex_view_popup(self, obj):
-        return render_to_string('image/custom_button.html', {'name':''})
+        return render_to_string('image/custom_button.html', {'name': 'Update'})
 
     class Media:
         js = (
