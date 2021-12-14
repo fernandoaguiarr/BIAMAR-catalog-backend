@@ -238,7 +238,7 @@ class GroupAdmin(admin.ModelAdmin):
                 'label': 'Biamar',
                 'isMain': request.POST.get('_selected_main_photo', False),
                 'name': str(photo.code),
-                'url': 'https://catalogo.biamar.com.br/media/photos/47f366f0c34f415f827540bf06d7028c.jpg'
+                'url': photo.file.url
             }
 
             if action:
