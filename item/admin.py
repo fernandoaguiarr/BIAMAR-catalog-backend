@@ -280,11 +280,7 @@ class GroupAdmin(admin.ModelAdmin):
 
                 status[0], status[1] = f'{status[0]};{response.status_code}', f'{status[1]};{sku}'
 
-            print(response.status_code, response.content)
         return HttpResponseRedirect(f'{request.POST.get("_current_url")}&skus={status[1]}&status={status[0]}', '/')
-
-    class Media:
-        js = ('item/js/upload_to_vtex.js',)
 
     list_display = ('code',)
     search_fields = ('code',)
