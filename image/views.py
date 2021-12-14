@@ -8,7 +8,7 @@ from item.models import Group, Color
 from image.models import Photo, Category
 from utils.interfaces import CustomViewSet
 from image.serializers import PhotoSerializer
-from image.permissions import DefaultViewSetPermission
+from image.permissions import ImageViewSetPermission
 
 
 class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
@@ -26,7 +26,7 @@ class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
         return Photo.objects.all()
 
     def get_permissions(self):
-        return [IsAuthenticated(), DefaultViewSetPermission()]
+        return [IsAuthenticated(), ImageViewSetPermission()]
 
     def list(self, request, *args, **kwargs):
         query_params = request.query_params.copy()
