@@ -21,7 +21,7 @@ function popItUp(el) {
             photo = photo.split('.')[0];
 
 
-            newWindow=window.open(`vtex/?color=${color}&file=${photo}`,'{{title}}','height=450,width=800');
+            newWindow=window.open(`vtex/?color=${color}&file=${photo}`,'{{title}}','height=710,width=950');
             if (window.focus) {newWindow.focus()}
         }
     }
