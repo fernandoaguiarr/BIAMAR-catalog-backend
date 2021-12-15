@@ -1,9 +1,11 @@
 import uuid
 
 from django.db import models
+from django.conf import settings
 from django.dispatch import receiver
 from django.db.models import UniqueConstraint
 from django.db.models.signals import pre_save
+from django.utils.safestring import mark_safe
 
 from image import constants
 from utils.models import ExportFor
@@ -23,7 +25,7 @@ def set_file_path(instance, filename):
     return '{}{}.{}'.format(
         constants.UPLOAD_FOLDER,
         instance.code,
-        filename.split('.')[-1]
+        filename.split('.')[-1].lower()
     )
 
 
@@ -35,6 +37,11 @@ class Photo(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     file = models.ImageField(max_length=128, upload_to=set_file_path)
     export_to = models.ManyToManyField(ExportFor)
+
+    def show_file_preview(self):
+        return mark_safe(
+            '<img src="%s%s" width="100" height="125" />' % (settings.MEDIA_URL, self.file) if self.file else ""
+        )
 
     def __str__(self):
         return "{} - {}".format(self.group, self.code)

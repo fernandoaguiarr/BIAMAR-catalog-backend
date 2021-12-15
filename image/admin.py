@@ -26,16 +26,15 @@ class PhotoTabularInline(admin.TabularInline):
         return render_to_string('image/custom_button.html', {'name': 'Update'})
 
     class Media:
-        js = (
-            'image/js/popup.js',
-        )
+        js = ('image/js/popup.js',)
 
     extra = 1
     model = Photo
     form = PhotoForm
     open_vtex_view_popup.short_description = 'VTEX'
-    readonly_fields = ('code', 'open_vtex_view_popup')
-    fields = ('code', 'color', 'category', 'file', 'export_to', 'open_vtex_view_popup')
+    readonly_fields = ('code', 'open_vtex_view_popup', 'show_file_preview')
+    fields = ('code', 'color', 'category', 'export_to', 'file', 'show_file_preview', 'open_vtex_view_popup')
+    Photo.show_file_preview.short_description = ''
 
 
 @admin.register(Category)
