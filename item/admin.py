@@ -197,7 +197,8 @@ class GroupAdmin(admin.ModelAdmin):
                 'group': group,
                 'status': status,
                 'allow_delete': ','.join(
-                    [obj['code'] for obj in status if 'status' in obj.keys() and obj['status'] == 'OK']),
+                    [obj['code'] for obj in status if
+                     ('status' in obj.keys() and obj['status'] == 'OK') or (obj['active'])]),
                 'results': queryset.values('code', 'color__name', 'size__name'),
                 'result_headers': ('code', 'color', 'size', 'status'),
                 'actions': (('Upload', 1, True), ('Delete', 0, False)),
