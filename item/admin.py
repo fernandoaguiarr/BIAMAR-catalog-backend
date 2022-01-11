@@ -271,7 +271,7 @@ class GroupAdmin(admin.ModelAdmin):
             else:
                 exported_photo = ExportedPhoto.objects.get(sku__code=sku, photo=photo)
                 response = requests.delete(
-                    f'{config("VTEX_ENDPOINT")}catalog/pvt/stockkeepingunit/disassociate/{sku}/file/{exported_photo.code}',
+                    f'{config("VTEX_ENDPOINT")}catalog/pvt/stockkeepingunit/{sku}/file/{exported_photo.code}',
                     headers=headers
                 )
 
