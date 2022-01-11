@@ -283,6 +283,7 @@ class GroupAdmin(admin.ModelAdmin):
 
         return HttpResponseRedirect(f'{request.POST.get("_current_url")}&skus={status[1]}&status={status[0]}', '/')
 
+    ordering = ('-code',)
     list_display = ('code',)
     search_fields = ('code',)
     readonly_fields = ('code',)
