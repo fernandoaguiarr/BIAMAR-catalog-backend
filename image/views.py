@@ -37,7 +37,7 @@ class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
             if not request.user.has_perm('image.get_photo_api_categories'):
                 queryset = queryset.exclude(export_to__isnull=True)
 
-        serializer = PhotoSerializer(queryset, many=True)
+        serializer = PhotoSerializer(queryset, many=True, context={"request": request})
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
     def create(self, request):
