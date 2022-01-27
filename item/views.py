@@ -90,8 +90,7 @@ class ItemViewSet(viewsets.ViewSet, CustomViewSet, ERPViewSet):
                 'prices': [
                     {
                         'branchCode': 1,
-                        'priceCodeList': [10],
-                        'isPromotionalPrice': True
+                        'priceCodeList': [10]
                     }
                 ]
             },
