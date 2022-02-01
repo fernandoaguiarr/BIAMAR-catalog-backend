@@ -57,6 +57,7 @@ class Category(models.Model):
     order = models.IntegerField(null=True, blank=True)
 
     class Meta:
+        ordering = ['name']
         constraints = [
             UniqueConstraint(fields=['ERP_id'], name='unique_category')
         ]
