@@ -18,7 +18,8 @@ class PhotoTabularInline(admin.TabularInline):
         obj = kwargs.pop('obj', None)
         formfield = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name == "color" and obj:
-            formfield.queryset = Color.objects.filter(color_set__item__code__icontains=obj.code).distinct()
+            formfield.queryset = Color.objects.filter(color_set__item__code__icontains=obj.code).distinct().order_by(
+                'ERP_name')
         return formfield
 
     @mark_safe
