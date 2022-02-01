@@ -4,9 +4,9 @@ from django.core.cache import cache
 from django.core.management import BaseCommand
 
 from image.models import Photo
-from image.serializers import PhotoSerializer
 from item.models import Item, Category
 from item.serializers import CategorySerializer
+from image.serializers import DefaultPhotoSerializer
 
 
 class Command(BaseCommand):
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             if group:
                 obj = {
                     **obj,
-                    **PhotoSerializer(random.choice(Photo.objects.filter(group=group)), many=False).data
+                    **DefaultPhotoSerializer(random.choice(Photo.objects.filter(group=group)), many=False).data
                 }
             res.append(CategorySerializer(obj, many=False).data)
 
