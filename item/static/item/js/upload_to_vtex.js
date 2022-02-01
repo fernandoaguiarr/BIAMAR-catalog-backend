@@ -14,7 +14,7 @@ function checkSubmitButtonState(toggleAll=false){
     let firstCheck = true;
     let allowDelete = false;
     let disableButton = true;
-    let exportedSkus = [...document.getElementsByName("_selected_sku")][0].value;
+    let exportedSkus =document.getElementById("_exported").value;
 
     for (let i in checkboxes){
         if (checkboxes[i].checked && actionRadioButton[1].checked){
