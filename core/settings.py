@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.sites',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -177,3 +178,5 @@ CACHES = {
 DJANGO_SUPERUSER_USERNAME = config('DJANGO_SUPERUSER_USERNAME')
 DJANGO_SUPERUSER_PASSWORD = config('DJANGO_SUPERUSER_PASSWORD')
 DJANGO_SUPERUSER_EMAIL = config('DJANGO_SUPERUSER_EMAIL')
+
+SITE_ID = 1
