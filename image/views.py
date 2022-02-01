@@ -1,9 +1,12 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError, NotFound
 
+from utils.models import ExportFor
 from item.models import Group, Color
 from image.models import Photo, Category
 from utils.interfaces import CustomViewSet
@@ -41,7 +44,7 @@ class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
     def create(self, request):
-        required_params = ['group', 'color', 'category', 'file']
+        required_params = ['group', 'color', 'category', 'file', 'export_to']
         params = request.data
 
         missing = [param for param in required_params if param not in params.keys()]
@@ -58,5 +61,16 @@ class PhotoViewSet(viewsets.ViewSet, CustomViewSet):
             'file': params['file']
         }
 
-        Photo(**params).save()
+        export_to = []
+        for value in request.data['export_to']:
+            try:
+                obj = ExportFor.objects.get(id=int(value))
+                export_to.append(obj)
+            except ObjectDoesNotExist:
+                raise NotFound(detail='Export location not found')
+        photo = Photo(**params)
+        photo.save()
+
+        photo.export_to.add(*export_to)
+
         return Response(status=status.HTTP_200_OK)
