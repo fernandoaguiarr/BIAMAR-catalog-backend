@@ -1,0 +1,125 @@
+{% extends "admin/change_form.html" %}
+{% include "admin/change_list_results.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}">
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Upload to VTEX</h1>
+    <h2>{{group}}</h2>
+    <form method="post" action="change/" id="changelist-form" style="width:100%">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            <h2>Select an action</h2>
+            <div class="form-row">
+                <div>
+                    <label for="_selected_action" class="required">
+                        Action
+                    </label>
+                    <ul>
+                        {% for action in actions %}
+                        <li>
+                            <label for="_selected_action" style="padding-top:0">
+                                <input type="radio" style="margin-top:0"
+                                       name="_selected_action"
+                                       value="{{action.1}}"
+                                       id="_selected_action"
+                                       {% if action.2 %} checked {% endif %}
+                                >
+                                {{action.0}}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </fieldset>
+        <fieldset class="module aligned">
+            <h2>Set photo as main</h2>
+            <div class="form-row">
+                <div class="checkbox-row">
+                    <input type="checkbox" name="_selected_main_photo" id="_selected_main_photo" value="{{True}}">
+                    <label class="vCheckboxLabel" for="_selected_main_photo">Main photo</label>
+                    <div class="help"></div>
+                </div>
+            </div>
+        </fieldset>
+        <div id="changelist">
+            <fieldset class="module aligned" style="width:100%">
+                <h2>SKUS</h2>
+                <div class="results inline-group">
+                    <table id="results_list" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th scope="col" class="action-checkbox-column">
+                                <div class="text">
+                                    <span><input type="checkbox" id="action-toggle"></span>
+                                </div>
+                                <div class="clear"></div>
+                            </th>
+                            {% for key in result_headers %}
+                            <th scope="col" class="sortable">
+                                <div class="text"><a href="#">{{key}}</a></div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td class="action-checkbox">
+                                <input type="checkbox" name="_selected_sku" value="{{result.code}}"
+                                       class="action-select">
+                            </td>
+                            {% for key,value in result.items %}
+                            <th class="field-{{key}}"><a href="">{{value}}</a></th>
+                            {% endfor %}
+                            <th class="field-status">
+                                {% for obj in status %}
+                                {% if result.code == obj.code %}
+                                {% if obj.status %}
+                                <a href="">
+                                    {% if obj.active %} Uploaded - {% endif %}
+                                    {% if not obj.active %} Removed - {% endif %}
+                                    {{obj.status}}
+                                </a>
+                                {% endif %}
+                                {% if not obj.status %}
+                                <a href="">
+                                    {% if obj.active %}Uploaded{% endif %}
+                                    {% if not obj.active %}Removed{% endif %}
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                                {% endfor %}
+                            </th>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </fieldset>
+        </div>
+        {% block submit_buttons_bottom %}
+        <div class="submit-row">
+            {% block submit-row %}
+            {% if show_save %}
+            <input type="submit" value="{% translate 'Save' %}" class="default" name="_save" disabled>
+            {% endif %}
+            {% if show_close %}
+            <a href="#" onclick="return onCloseWindow()" class="closelink">{% translate 'Close' %}</a>
+            {% endif %}
+            {% endblock %}
+        </div>
+        <input type="hidden" value="{{file}}" name="_selected_file">
+        <input type="hidden" value="{{current_url}}" name="_current_url">
+    </form>
+    {% endblock %}
+    <script src='{% static "item/js/upload_to_vtex.js" %}'></script>
+    <input type="hidden" id="_exported" value="{{allow_delete}}">
+</div>
+{% endblock %}

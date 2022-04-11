@@ -1,5 +1,5 @@
-/media/
-/logs/errors.log
-/core/migrations/
-/item/migrations/
 /venv/
+/.idea/
+/*/migrations/
+/media/
+/cache/

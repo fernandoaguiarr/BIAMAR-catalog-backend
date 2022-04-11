@@ -1,169 +1,145 @@
-import os
-from uuid import uuid4
-
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.conf import settings
-from django.utils.safestring import mark_safe
+from django.db.models import UniqueConstraint
 
 
-class Size(models.Model):
-    description = models.CharField(max_length=16, null=False, unique=True)
-    sort = models.IntegerField(null=True, unique=True, default=None)
-
-    def __str__(self):
-        return str(self.description)
+# Create your models here.
+class Gender(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    ERP_name = models.CharField(max_length=64)
 
     class Meta:
-        app_label = "item"
-        ordering = ['sort']
-
-
-class Color(models.Model):
-    readonly_fields = ('id',)
-
-    id = models.CharField(primary_key=True, auto_created=False, max_length=32, null=False)
-    name = models.CharField(max_length=32, null=False)
+        constraints = [
+            UniqueConstraint(fields=['ERP_name'], name='unique_gender')
+        ]
 
     def __str__(self):
-        return "{} - {}".format(self.name, self.id)
-
-    class Meta:
-        app_label = "item"
-        ordering = ['name']
-
-
-class TypeItem(models.Model):
-    id = models.IntegerField(primary_key=True, auto_created=False, null=False, unique=True)
-    erp_name = models.CharField(max_length=64, null=True, verbose_name="ERP name")
-
-    name = models.CharField(max_length=64, null=False)
-
-    def __str__(self):
-        return str(self.name)
-
-    class Meta:
-        app_label = "item"
-        db_table = "item_type"
-        ordering = ['id']
-
-
-class Season(models.Model):
-    id = models.IntegerField(primary_key=True, auto_created=False, null=False)
-    erp_name = models.CharField(max_length=64, null=True, verbose_name="ERP name")
-    name = models.CharField(max_length=64, null=False)
-
-    def __str__(self):
-        return str(self.name)
-
-    class Meta:
-        app_label = "item"
-        ordering = ['-id']
+        return self.name
 
 
 class Brand(models.Model):
-    id = models.IntegerField(primary_key=True, auto_created=False, null=False)
-    erp_name = models.CharField(max_length=64, null=True, verbose_name="ERP name")
-    name = models.CharField(max_length=64, null=False)
-
-    def __str__(self):
-        return str(self.name)
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    ERP_id = models.IntegerField()
+    ERP_name = models.CharField(max_length=32)
+    order = models.IntegerField(null=True, blank=True)
+    logo = models.CharField(max_length=32, null=True, blank=True)
 
     class Meta:
-        app_label = "item"
-        ordering = ['id']
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_brand')
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class Season(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    ERP_id = models.IntegerField()
+    ERP_name = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_season')
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    ERP_id = models.IntegerField()
+    ERP_name = models.CharField(max_length=32)
+    order = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_category')
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class Color(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    ERP_id = models.CharField(max_length=32)
+    ERP_name = models.CharField(max_length=32)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['ERP_id'], name='unique_color')
+        ]
+
+    def __str__(self):
+        return "{} - {}".format(self.ERP_id, self.name)
+
+
+class Size(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=32)
+    order = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=['name'], name='unique_size')
+        ]
+
+    def __str__(self):
+        return self.name
 
 
 class Group(models.Model):
-    id = models.CharField(
-        primary_key=True,
-        max_length=16,
-        null=False,
-    )
-
-    def __str__(self):
-        return str(self.id)
+    id = models.BigAutoField(primary_key=True)
+    code = models.IntegerField()
 
     class Meta:
-        app_label = "item"
-        ordering = ['-id']
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_group')
+        ]
+
+    def __str__(self):
+        return "{}".format(self.code)
 
 
 class Item(models.Model):
-    id = models.CharField(
-        primary_key=True,
-        max_length=16,
-        null=False
-    )
-
-    genre = models.CharField(
-        max_length=16,
-        null=True
-    )
-
-    group = models.ForeignKey(Group, related_name="item_group", on_delete=models.CASCADE)
-    type = models.ForeignKey(TypeItem, related_name="item_type", on_delete=models.CASCADE)
-    brand = models.ForeignKey(Brand, related_name="brand_type", on_delete=models.CASCADE)
-    season = models.ForeignKey(Season, related_name="season_type", on_delete=models.CASCADE)
-
-    def __str__(self):
-        return str(self.id)
+    id = models.BigAutoField(primary_key=True)
+    code = models.CharField(max_length=32)
+    gender = models.ForeignKey(to=Gender, on_delete=models.CASCADE)
+    category = models.ForeignKey(to=Category, on_delete=models.CASCADE, related_name='category_set')
+    brand = models.ForeignKey(to=Brand, on_delete=models.CASCADE, related_name='brand_set')
+    season = models.ForeignKey(to=Season, on_delete=models.CASCADE, related_name='season_set')
+    group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='group_set')
 
     class Meta:
-        app_label = "item"
-        ordering = ['-id']
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_item')
+        ]
+
+    def __str__(self):
+        return self.code
 
 
 class Sku(models.Model):
-    id = models.CharField(primary_key=True, max_length=8)
-    ean = models.CharField(max_length=24, null=True)
-    weight = models.CharField(max_length=16, null=True)
-    color = models.ForeignKey(Color, related_name="sku_color", on_delete=models.CASCADE)
-    size = models.ForeignKey(Size, related_name="sku_size", on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, related_name="sku_item", on_delete=models.CASCADE)
-    active = models.BooleanField()
-
-    def __str__(self):
-        return str(self.id)
+    id = models.BigAutoField(primary_key=True)
+    code = models.CharField(max_length=32)
+    active = models.BooleanField(default=False)
+    weight = models.DecimalField(max_digits=5, decimal_places=2, null=True)
+    item = models.ForeignKey(to=Item, on_delete=models.CASCADE, related_name='item_set')
+    color = models.ForeignKey(to=Color, on_delete=models.CASCADE, related_name='color_set')
+    size = models.ForeignKey(to=Size, on_delete=models.CASCADE)
 
     class Meta:
-        app_label = "item"
-
-
-class TypePhoto(models.Model):
-    name = models.CharField(max_length=32, null=False, unique=True)
-
-    def __str__(self):
-        return str(self.name)
-
-    class Meta:
-        app_label = "item"
-        db_table = "item_type_photo"
         ordering = ['id']
-
-
-def upload(instance, filename):
-    return "photos/{0}.{1}".format(uuid4().hex, filename.split('.')[-1])
-
-
-class Photo(models.Model):
-    def image_tag(self):
-        return mark_safe(
-            '<img src="{}/{}" width="100" height="100" />'.format(settings.MEDIA_URL, self.path)) if self.path else ""
-
-    group = models.ForeignKey(Group, related_name="photo_group", on_delete=models.CASCADE)
-    type = models.ForeignKey(TypePhoto, related_name="photo_type", on_delete=models.CASCADE)
-    color = models.ForeignKey(Color, related_name="photo_color", on_delete=models.CASCADE)
-    path = models.ImageField(upload_to=upload)
-    preview = models.BooleanField()
-    order = models.IntegerField(blank=True, null=True, unique=False)
-    export_ecommerce = models.BooleanField(default=False)
-
-    image_tag.short_description = 'Image preview'
+        constraints = [
+            UniqueConstraint(fields=['code'], name='unique_sku')
+        ]
 
     def __str__(self):
-        return "{} / {} - {}".format(self.group.id, self.color, self.type.name)
-
-    class Meta:
-        app_label = "item"
-        ordering = ['-id']
+        return self.code

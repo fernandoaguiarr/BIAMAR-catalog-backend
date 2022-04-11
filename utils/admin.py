@@ -1,12 +1,25 @@
 from django.contrib import admin
 
-from utils.models import Pdf
+from utils.forms import ExportForForm
+from utils.models import MailNotification, ExportFor
 
 
-@admin.register(Pdf)
-class PdfAdmin(admin.ModelAdmin):
-    readonly_fields = ['url_tag']
-    fieldsets = [("PDF", {'fields': ['name', 'year', 'file']}), ("Link", {'fields': ['url_tag']})]
+# Register your models here.
+@admin.register(MailNotification)
+class MailNotificationAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ('Query code', {'fields': ('code',)}),
+        ("Notification's info", {'fields': ('name', 'description')}),
+        ('Send to', {'fields': ('users',)})
+    )
 
-    list_display = ['year', 'name']
-    search_fields = ['name', 'year']
+    readonly_fields = ('code',)
+    search_fields = ('code', 'name')
+    list_display = ('name',)
+
+
+@admin.register(ExportFor)
+class ExportForAdmin(admin.ModelAdmin):
+    search_fields = ('name',)
+    list_display = ('name', 'category')
+    form = ExportForForm

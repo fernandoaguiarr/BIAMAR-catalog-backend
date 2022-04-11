@@ -1,334 +1,322 @@
-import io
+import gc
 import json
+import re
+
 import requests
+import numpy as np
 import pandas as pd
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
-from django.core.management import BaseCommand, call_command, CommandError
-from django.utils import timezone, dateformat
-from django.utils.dateparse import parse_date
+from django.core.cache import cache
 from django.db import IntegrityError
-from requests import HTTPError
+from django.utils.dateparse import parse_date
+from django.utils import timezone, dateformat
+from django.template.loader import render_to_string
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core.management import BaseCommand, CommandError, call_command
 
-from item.models import Item, Color, Size, Season, Brand, TypeItem, Group, Sku
+from item.constants import ITEM_REGEX, GROUP_REGEX
+from item.models import Group, Item, Season, Category, Brand, Color, Size, Gender, Sku
 
 
-def get_products(start_date, end_date, page_index=0):
-    """
-    Request to the API products that has some changed fields in a period.
-    :param start_date: date. The start date
-    :param end_date: date. The limit date
-    :param page_index: number;
-    :return: Return a dict(response)
-    """
-    token = io.StringIO()
-    call_command('gettoken', 'v2', stdout=token)
+def camel_case(value):
+    return re.sub(r'\w+', lambda m: m.group(0).capitalize(), value)
 
-    token = token.getvalue().replace("\n", "")
+
+def get_items(start_date, end_date, index=0):
+    token = cache.get('ERP_token')
     url = 'https://www30.bhan.com.br:9443/api/totvsmoda/product/v2/references/search'
-
-    header = {
-        'Authorization': token,
-        'Accept': 'aplication/json',
-        'Content-Type': 'application/json'
-    }
-
+    header = {'Authorization': token, 'Accept': 'aplication/json', 'Content-Type': 'application/json'}
     body = {
-        'filter': {
-            'change': {
-                'startDate': start_date,
-                'endDate': end_date,
-                'inBranchInfo': True,
-                'branchInfoCodeList': [1]
-            },
-            "classifications": [
-                {
-                    "type": 33,
-                    "codeList": [
-                        "1"
-                    ]
-                }
-            ]
+        "filter": {
+            "change": {"startDate": start_date, "endDate": end_date, "inBranchInfo": True, "branchInfoCodeList": [1]},
+            "branchInfo": {"branchCode": 1, "isActive": True, "isFinishedProduct": True},
+            "classifications": [{"type": 33, "codeList": ["1"]}]
         },
-        'option': {
-            'branchInfoCode': 1
-        },
+        'option': {'branchInfoCode': 1},
         'expand': 'classifications,additionalFields',
-        'page': page_index,
+        'page': index,
         'pageSize': 100
     }
 
-    response = requests.post(url=url, headers=header, data=json.dumps(body))
     try:
+        response = requests.post(url=url, headers=header, data=json.dumps(body, cls=DjangoJSONEncoder))
         if response.status_code != 200:
-            raise HTTPError(response.status_code)
-        else:
-            return json.loads(response.content)
-    except HTTPError as error:
-        raise CommandError("Something went wrong with the request. The request status: {}".format(error))
+            raise requests.HTTPError(response.status_code)
+        return json.loads(response.content)
+    except requests.HTTPError as exception:
+        raise CommandError(exception)
 
 
-def dataframe_column_is_valid(df, column, pattern):
-    """
-    Run regex full match search in dataframe column.
-    :param df: Pandas dataframe
-    :param column: str. Dataframe column name that will be made regex search
-    :param pattern: str. Regex expression. Eg.: r'[0-9]{2} [0-9]{2} (0{2}[0-9]{4})'
-    :return: Dataframe with column regex match status
-    """
-    series = pd.Series(data=df[column].values, dtype='string').str.fullmatch(pattern)
+def find(arr, parent_key, parent_value, child_key):
+    for value in arr:
+        if value[parent_key] == parent_value:
+            return value[child_key]
 
-    return pd.concat(
-        [pd.Series(data=df[column].values, dtype='string'), series],
-        ignore_index=True,
-        axis=1
-    )
+    return 'error'
 
 
-def filter_dataframe(data, key, values):
-    """
-    Transform the dict into a dataframe and filter this dataframe in the column selected returning a dataframe of
-    the values provided.
-    :param data: dict. Data that will be transformed in df and filtered
-    :param key: str. The Dataframe column name
-    :param values: list. A list of values to be returned
-    :return: Dataframe of the filtered values
-    """
-    df = pd.DataFrame(data=data)
-    return df.loc[df[key].isin(values)]
+def insert_group(group):
+    Group.objects.update_or_create(code=group)
+    return False
 
 
-def command_date_is_valid(start=None, end=None):
-    """
-    Parse the string to date instances. If the params was not provided set\n
-    start date: current date - 1 day
-    \nend date :to the current date
-    :param start: str.The start date
-    :param end: str. The limit date
-    :return: Dict with these serialized dates
-    """
+def insert_gender(erp_name: str):
     try:
-        start = parse_date(start) if start else (timezone.now() - timezone.timedelta(days=1))
-        end = parse_date(end) if end else timezone.now()
-    except ValueError:
-        raise CommandError("The given date is well formatted but not a valid date.")
+        Gender.objects.get(ERP_name=erp_name)
+    except ObjectDoesNotExist:
+        Gender(ERP_name=erp_name, name=erp_name.capitalize()).save()
 
-    return {'start': dateformat.format(start, 'c'), 'end': dateformat.format(end, 'c')}
+    return False
 
 
-def insert_model(df, df_columns, klass, klass_fields=None, additional_fields=None, force_update=True):
-    """
-    Change the dataframe columns names to klass_fields and convert to the dict.
-    After that iter the dict and insert it in the database
-    :param klass: model class. Only the class reference not instance. Eg.: insert_model(klass=Group,...)
-    :param klass_fields: list. A List of the model class fields
-    :param additional_fields:Dict. A Dict with additional fields that will be inserted
-     on the first insertion of the model object
-    :param force_update: Boolean. Value to allow queryset update
-    :param df: dataframe. Dataframe with the data that will be inserted in database
-    :param df_columns: list. A List of dataframe columns
-    """
+def insert_size(name):
+    try:
+        Size.objects.get(name=name)
+    except ObjectDoesNotExist:
+        Size(name=name).save()
+    return False
 
-    if additional_fields is None:
-        additional_fields = {}
-    if klass_fields is not None:
-        df = df.rename(columns=dict(zip(df_columns, klass_fields)))
 
-    for _ in df.to_dict(orient='records'):
-        try:
-            queryset = klass.objects.filter(**_)
-            if not queryset.first():
-                raise ObjectDoesNotExist
-            elif force_update:
-                queryset.update(**_)
-        except ObjectDoesNotExist:
-            # Creating model class instance and saving it to the database
-            # {**_, **aditional_fields} -> joining values
-            klass(**({**_, **additional_fields})).save()
+def insert_brand(erp_id, erp_name: str):
+    try:
+        Brand.objects.get(ERP_id=erp_id)
+    except ObjectDoesNotExist:
+        Brand(ERP_id=erp_id, ERP_name=erp_name, name=erp_name.capitalize()).save()
+
+    return False
+
+
+def insert_season(erp_id, erp_name: str):
+    try:
+        Season.objects.get(ERP_id=erp_id)
+    except ObjectDoesNotExist:
+        Season(ERP_id=erp_id, ERP_name=erp_name, name=camel_case(erp_name)).save()
+
+    return False
+
+
+def insert_color(erp_id, erp_name: str):
+    try:
+        Color.objects.get(ERP_id=erp_id)
+    except ObjectDoesNotExist:
+        Color(ERP_id=erp_id, ERP_name=erp_name, name=erp_name).save()
+
+    return False
+
+
+def insert_category(erp_id, erp_name: str):
+    try:
+        Category.objects.get(ERP_id=erp_id)
+    except ObjectDoesNotExist:
+        Category(ERP_id=erp_id, ERP_name=erp_name, name=camel_case(erp_name)).save()
+    return False
+
+
+def insert_sku(code, active, item, color, size):
+    try:
+        Sku.objects.update_or_create(
+            code=code,
+            active=active,
+            item=Item.objects.get(code=item),
+            color=Color.objects.get(ERP_id=color),
+            size=Size.objects.get(name=size)
+        )
+        return False
+    except ObjectDoesNotExist:
+        return True
+
+
+def insert_item(code, group, category, brand, season, gender):
+    try:
+        Item.objects.update_or_create(
+            code=code,
+            group=Group.objects.get(code=group),
+            category=Category.objects.get(ERP_id=int(category)),
+            brand=Brand.objects.get(ERP_id=brand),
+            season=Season.objects.get(ERP_id=season),
+            gender=Gender.objects.get(ERP_name=gender)
+        )
+        return False
+    except (ObjectDoesNotExist, IntegrityError):
+        return True
 
 
 class Command(BaseCommand):
-    help = 'Request product data from API v2.x and insert in DB.'
 
     def __init__(self):
         super().__init__()
+        self.errors = {'specs': [], 'items': [], 'skus': []}
+        self.allow_send_email = False
+        self.skip_notification = True
+        self.email_template = 'item/database_sync_error.html'
 
-        self._pages = 1
-        self._total_items = 0
-        self._total_page_items = 0
-        self._total_errored_items = 0
-        self._total_page_treated_items = 0
-
-        self._errored_items = None
+        self.dates = [timezone.now() - timezone.timedelta(1), timezone.now()]
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--start',
-            help='Set a start date to search products changes. If none is passed the start date is setted'
-                 ' to the last day. The pattern date is Y-m-d. Eg.: 2020-09-29'
-        )
-
-        parser.add_argument(
-            '--end',
-            help='Set a end date to search products changes. If none is passed the end date is setted'
-                 ' to the current date. The pattern date is Y-m-d. Eg.: 2020-09-29',
-        )
+        parser.add_argument('--notificationcode')
+        parser.add_argument('--startdate')
+        parser.add_argument('--enddate')
 
     def handle(self, *args, **options):
-        next_page = True
-        classifications_list = [1, 112, 110, 111, 7]
+        self.date_is_valid([options['startdate'], options['enddate']])
 
-        dates = command_date_is_valid(options['start'], options['end'])
+        if options['notificationcode']:
+            self.skip_notification = False
 
-        while next_page:
-            response = get_products(start_date=dates['start'], end_date=dates['end'], page_index=self._pages)
+        condition = True
+        index = 1
 
-            # If the response has been paginated
-            next_page = response['hasNext']
+        while condition:
+            data = get_items(self.dates[0], self.dates[1], index)
+            if not data['items']:
+                break
 
-            # Transform the response in DF and  after that make a regex search to exclude wrong items codes
-            # from the dataframe
-            df = pd.DataFrame(data=response['items'])
-            validated_df = dataframe_column_is_valid(df, 'ReferenceCode',
-                                                     r'[0-9]{2} [0-9]{2} ([0-9]{6}|[0-9]{5})')
-            validated_df = validated_df.loc[validated_df[1]]
+            df = pd.json_normalize(data['items'], ['colors', 'products', ['classifications']])
+            df = df.loc[df.typeCode.isin([1, 7, 110, 111, 112]), ['typeCode', 'code', 'name']]
 
-            # Convert the dataframe to a dict to be able to iter
-            items = df[df['ReferenceCode'].isin(validated_df[0])].to_dict(orient='records')
-            # Every while loop reset values of _total_page_items, _total_page_treated_items and the insertion statistics
-            self._total_page_items = len(items)
-            self._total_page_treated_items = 0
-            self.stdout.write("")
+            # Get first occurrence of all items' specifications. Specifications may be duplicated
+            df = df.groupby(by=['typeCode', 'code'], as_index=False).first()
 
-            for item in items:
-                try:
-                    # Filter all sku classifications from item and get only classifications with codes
-                    # that are in classifications_list
-                    classifications_df = filter_dataframe(
-                        data=pd.json_normalize(item['colors'], ['products', ['classifications']]),
-                        key='typeCode',
-                        values=classifications_list
-                    )
+            # Prepare group values to insert into database
+            df.loc[df.typeCode == 112, 'code'] = df.code.str.replace(r'^00', '', regex=True)
+            df.loc[(df.typeCode == 112) & ~(df.code.str.contains(GROUP_REGEX, regex=True)), 'error'] = True
+            sentence = (df.typeCode == 112) & (df.error.isnull())
+            df.loc[sentence, 'error'] = np.vectorize(insert_group, otypes=[bool])(df.loc[sentence, 'code'])
 
-                    # Drop duplicates dataframe values because the SKUs classifications may be the same,
-                    # this step is done to prevent double or more database insert tries
-                    classifications_df = classifications_df.drop_duplicates()
+            # Prepare brand' values to insert into database
+            sentence = (df.typeCode == 111)
+            df.loc[sentence, 'error'] = np.vectorize(insert_brand)(
+                df.loc[sentence, 'code'],
+                df.loc[sentence, 'name']
+            )
 
-                    sku_df = pd.json_normalize(item['colors'], ['products'], ['code'], meta_prefix='_')
+            # Prepare categories' values to insert into database
+            sentence = (df.typeCode == 110)
+            df.loc[sentence, 'error'] = np.vectorize(insert_category, otypes=[bool])(
+                df.loc[sentence, 'code'],
+                df.loc[sentence, 'name'],
+            )
 
-                    # Filter classifications_df to get brand, group, season, type and genre in separately dataframes
-                    # to make the database insertion more simple and easily
-                    group_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [112]))[['code']]
-                    brand_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [111]))[['code', 'name']]
-                    season_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [7]))[['code', 'name']]
-                    type_df = pd.DataFrame(filter_dataframe(classifications_df, 'typeCode', [110]))[['code', 'name']]
-                    genre_df = filter_dataframe(classifications_df, 'typeCode', [1])[['name']]
+            # Prepare seasons' values to insert into database
+            sentence = (df.typeCode == 7)
+            df.loc[sentence, 'error'] = np.vectorize(insert_season, otypes=[bool])(
+                df.loc[sentence, 'code'],
+                df.loc[sentence, 'name'],
+            )
 
-                    # Raise IndexError if some of the previous dataframe is empty. If this condicition is True
-                    # go to the next item
-                    if group_df.empty or brand_df.empty or season_df.empty or type_df.empty:
-                        raise IndexError
-                    else:
-                        # Remove possible space characters in group_df value, after that run regex validation
-                        group_df['code'] = group_df['code'].str.rstrip()
-                        validated_group_df = dataframe_column_is_valid(group_df, 'code', r'[0-9]{6}|[0-9]{5}')
+            # Prepare genders' values to insert into database
+            sentence = (df.typeCode == 1)
+            df.loc[sentence, 'error'] = np.vectorize(insert_gender, otypes=[bool])(df.loc[sentence, 'name'])
+            self.errors['specs'] = [*self.errors['specs'], *df.loc[df.error, ['typeCode', 'code']].to_dict('records')]
 
-                        # if the validations fails ValidationError and go to the next item,
-                        # otherwise perfom the insertions
-                        if validated_group_df.iloc[0][1]:
-                            colors_df = pd.DataFrame(data=item['colors'], columns=['code', 'name'])
-                            insert_model(klass=Color, klass_fields=['id', 'name'], df=colors_df,
-                                         df_columns=colors_df.columns, force_update=False)
+            # Prepare sizes' values to insert into database
+            sizes = pd.json_normalize(data['items'], 'grid')
+            sizes = sizes.groupby(by=[0], as_index=False).first()
+            sizes.loc[:, 'error'] = np.vectorize(insert_size, otypes=[str])(sizes[0])
 
-                            sizes_df = pd.DataFrame(data=item['grid'])
-                            insert_model(klass=Size, klass_fields=['description'], df=sizes_df,
-                                         df_columns=sizes_df.columns, force_update=False)
+            # free memory
+            del sentence, sizes, df
+            gc.collect()
 
-                            insert_model(klass=Season, klass_fields=['id', 'erp_name'],
-                                         additional_fields={'name': season_df.iloc[0]['name']},
-                                         df=season_df,
-                                         df_columns=season_df.columns, force_update=False)
-                            insert_model(klass=Brand, klass_fields=['id', 'erp_name'],
-                                         additional_fields={'name': brand_df.iloc[0]['name']},
-                                         df=brand_df,
-                                         df_columns=brand_df.columns, force_update=False)
-                            insert_model(klass=TypeItem, klass_fields=['id', 'erp_name'],
-                                         additional_fields={'name': type_df.iloc[0]['name']},
-                                         df=type_df,
-                                         df_columns=type_df.columns,
-                                         force_update=False)
-                            insert_model(klass=Group, klass_fields=['id'], df=group_df, df_columns=group_df.columns)
+            meta = ['ReferenceCode', ['colors', 'code'], ['colors', 'name']]
+            columns = ['ReferenceCode', 'code', 'isActive', 'colors.code', 'colors.name', 'size', 'specs']
+            df = pd.json_normalize(data['items'], ['colors', ['products']], meta)
+            df = df.rename(columns={'classifications': 'specs'})
+            df = df.loc[:, columns]
+            df.loc[:, 'ReferenceCode'] = df.ReferenceCode.str.replace(r' 00', ' ', regex=True)
 
-                            # Create a item_dict with the model classes objects because django requires
-                            # the foreign keys should be a model class instance.
-                            item_dict = {
-                                'id': item['ReferenceCode'],
-                                'genre': genre_df.iloc[0]['name'] if not genre_df.empty else None,
-                                'season': Season.objects.get(id=season_df.iloc[0]['code']),
-                                'brand': Brand.objects.get(id=brand_df.iloc[0]['code']),
-                                'type': TypeItem.objects.get(id=type_df.iloc[0]['code']),
-                                'group': Group.objects.get(id=group_df.iloc[0]['code'])
-                            }
+            # Prepare colors' values to insert into database
+            colors = df.loc[:, ['colors.code', 'colors.name']]
+            colors = colors.groupby(by=['colors.code'], as_index=False).first()
+            colors.loc[:, 'error'] = np.vectorize(insert_color, otypes=[bool])(
+                colors['colors.code'],
+                colors['colors.name']
+            )
 
-                            # Transform item_dict in a dataframe and send it to the database insertion method
-                            item_df = pd.DataFrame([item_dict])
-                            insert_model(klass=Item, df=item_df, df_columns=item_df.columns)
+            # # Prepare items' values to insert into database
+            items = df.groupby(by=['ReferenceCode'], as_index=False).first()
+            items.loc[:, 'error'] = False
+            items.loc[:, 'group'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 112, 'code')
+            items.loc[:, 'group'] = items.group.str.replace(r'^00', '', regex=True)
+            items.loc[~(items.group.str.contains(GROUP_REGEX, regex=True)), 'group'] = 'error'
+            items.loc[:, 'gender'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 1, 'name')
+            items.loc[:, 'season'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 7, 'code')
+            items.loc[:, 'brand'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 111, 'code')
+            items.loc[:, 'category'] = np.vectorize(find, otypes=[str])(items['specs'], 'typeCode', 110, 'code')
+            items.loc[~items.ReferenceCode.str.contains(ITEM_REGEX), 'error'] = True
+            sentence = (
+                    ~items.group.str.contains('error') &
+                    ~items.brand.str.contains('error') &
+                    ~items.season.str.contains('error') &
+                    ~items.gender.str.contains('error') &
+                    ~items.category.str.contains('error') &
+                    ~items.error
+            )
+            valid = items.loc[sentence, ['group', 'brand', 'category', 'season', 'gender', 'ReferenceCode']]
+            items.loc[sentence, 'error'] = np.vectorize(insert_item, otypes=[bool])(
+                valid.ReferenceCode,
+                valid.group,
+                valid.category,
+                valid.brand,
+                valid.season,
+                valid.gender
+            )
+            items.loc[~sentence, 'error'] = True
 
-                            # Create a dict with some columns of the original sku dataframe.
-                            # Where _code column is color id
-                            sku_dict = sku_df[['code', 'sku', 'isActive', 'size', '_code', 'additionalFields']].to_dict(
-                                orient='records')
+            # Prepare  Skus' values to insert into database
+            columns = ['code', 'isActive', 'ReferenceCode', 'colors.code', 'size']
+            skus = df.loc[df.ReferenceCode.isin(items.ReferenceCode), columns]
+            skus.loc[:, 'error'] = np.vectorize(insert_sku, otypes=[bool])(
+                skus.code,
+                skus.isActive,
+                skus.ReferenceCode,
+                skus['colors.code'],
+                skus['size']
+            )
 
-                            # The sku_dict may have more than one record, so iter the sku_dict and 'serialize'
-                            # the columns to the correct values.
-                            for sku in sku_dict:
-                                sku['ReferenceCode'] = Item.objects.get(id=item['ReferenceCode'])
-                                sku['_code'] = Color.objects.get(id=sku['_code'])
-                                sku['size'] = Size.objects.get(description=sku['size'])
+            # Append inserting errors
+            columns = ['id', 'categoria', 'marca', 'ref. último nível', 'coleção', 'gênero']
+            errors = items.loc[
+                items.error,
+                ['ReferenceCode', 'category', 'brand', 'group', 'season', 'gender']
+            ]
+            errors = errors.rename(columns=dict(zip(errors.columns, columns)))
+            self.errors['items'] = [*self.errors['items'], *errors.to_dict('records')]
 
-                                # Filter the sku['additionalFields'] values to get only the weight value
-                                # The sku['additionalFields'] may have no values, so the weight, in this conditions,
-                                # value will be None
-                                weight = None
-                                if sku['additionalFields']:
-                                    weight = filter_dataframe(sku['additionalFields'], 'code', [3])
-                                    weight = weight.iloc[0]['value'] if not weight.empty else None
+            del columns, meta, sentence, df, colors, items, skus
+            condition = data['hasNext']
+            index += 1
 
-                                sku['additionalFields'] = weight
+        if not self.skip_notification:
+            self.prepare_errors()
+            if self.allow_send_email:
+                html = render_to_string(
+                    self.email_template,
+                    {'default_error_text': 'Classificação não encontrada', 'items': self.errors}
+                )
+                call_command('sendmail', options['notificationcode'], 'Incoerências ao importar produtos', None, html)
 
-                            # Transform the dict into a dataframe and send it to the database insertion method
-                            sku_df = pd.DataFrame(sku_dict)
-                            insert_model(
-                                klass=Sku,
-                                klass_fields=['id', 'ean', 'active', 'size', 'color', 'weight', 'item'],
-                                df=sku_df,
-                                df_columns=sku_df.columns
-                            )
-                        else:
-                            raise ValidationError("Group isn't valid.")
+    def date_is_valid(self, dates):
+        try:
+            for index, date in enumerate(dates):
+                if date:
+                    date = date.replace("/", "-")
+                    date = parse_date(date)
+                    self.dates[index] = date
+                else:
+                    self.dates[index] = self.dates[index].replace(hour=0, minute=0, second=0, microsecond=0)
+                self.dates[index] = dateformat.format(self.dates[index], 'c')
+        except ValueError:
+            raise CommandError("input is well formatted but not a valid date.")
 
-                        # The database insertion runs well, this method has called to print the current insertion status
-                        self._progress_status()
-                        self._total_items += 1
+    def prepare_errors(self):
+        for key, arr in self.errors.items():
+            if arr:
+                self.allow_send_email = True
+                break
 
-                except IndexError:
-                    # Increment _total_errored_items
-                    self._total_errored_items += 1
-                except ValidationError:
-                    # Increment _total_errored_items
-                    self._total_errored_items += 1
-
-            self._pages += 1
-        self._progress_status(last_page=True)
-
-    def _progress_status(self, last_page=False):
-        """
-        Increment _total_page_treated_items every time this method is called and after that print the progress of
-        database insertion.
-        """
-        if not last_page:
-            self._total_page_treated_items += 1
-            self.stdout.write("Page {}. Treated {}% of {} items.".format(self._pages, int(
-                (self._total_page_treated_items * 100) / self._total_page_items), self._total_page_items), ending='\r')
-        else:
-            self.stdout.write("\n\n{}".format(self._total_items))
+        self.errors = [
+            {'display_name': 'classificações', 'description': None, 'values': self.errors['specs']},
+            {'display_name': 'referências', 'description': None, 'values': self.errors['items']},
+        ]
